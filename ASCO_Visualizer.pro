@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui concurrent
+QT       += core gui concurrent network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -27,20 +27,25 @@ CONFIG += c++11
 
 
 INCLUDEPATH +="/usr/include/qwt"
-CONFIG += qwt-qt5
-LIBS += -L/usr/lib -lqwt-qt5
+INCLUDEPATH +="src"
+
+CONFIG += qwt
+LIBS += -L/usr/lib -lqwt
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp \
-    displayer.cpp
+    src/asco_parameter.cpp \
+    src/displayer.cpp \
+    src/main.cpp \
+    src/mainwindow.cpp
 
 HEADERS += \
-        mainwindow.h \
-    displayer.h
+    src/asco_parameter.h \
+    src/asco_parameter.hpp \
+    src/displayer.h \
+    src/mainwindow.h
 
 FORMS += \
-        mainwindow.ui
+        src/mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
