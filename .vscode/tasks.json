@@ -1,0 +1,18 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "/usr/bin/cmake --build /home/dom/Documents/Source/ASCO_Visualizer/build --config Debug --target all -j 10",
+            "problemMatcher": []
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "rm -rf /home/dom/Documents/Source/ASCO_Visualizer/build/*"
+        }
+    ]
+}
