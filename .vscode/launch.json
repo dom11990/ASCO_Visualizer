@@ -24,7 +24,7 @@
             ],
             "preLaunchTask": "C/C++: g++ build active file",
             "miDebuggerPath": "/usr/bin/gdb",
-            "visualizerFile": "/home/dom/.config/Code - OSS/User/workspaceStorage/b8d3f8311db74cff44b3922d178bee16/tonka3000.qtvsctools/qt.natvis.xml"
+            "visualizerFile": "/home/dom/.config/Code - OSS/User/workspaceStorage/24c29e54424834dd47ce2297d18b4b7b/tonka3000.qtvsctools/qt.natvis.xml"
         }
     ]
 }

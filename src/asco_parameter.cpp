@@ -40,7 +40,18 @@ ASCO_Parameter::ASCO_Parameter(QWidget *parent)
     curv_data->setRawSamples(v_xdata.data(),v_ydata.data(),v_ydata.size());
     curv_data->attach(plt_plot);
 
+
+    //make the widget retain the space even when it is hidden
+    QSizePolicy sp_retain = sizePolicy();
+    sp_retain.setRetainSizeWhenHidden(true);
+    setSizePolicy(sp_retain);
+
+
+//connect signals and slots
     connect(zoomzoom, SIGNAL(zoomed(const QRectF&)),this,SLOT(sl_zoomed (const QRectF &)));
+
+    connect(this,&ASCO_Parameter::sg_setData, this, &ASCO_Parameter::sl_setData);
+    connect(this,&ASCO_Parameter::sg_appendDataPoint, this, &ASCO_Parameter::sl_appendDataPoint);
 
 }
 
@@ -60,16 +71,19 @@ void ASCO_Parameter::setTitle(const QString& title)
 
 
 
-void ASCO_Parameter::sl_setData(const QVector<double> & data_point) 
+void ASCO_Parameter::sl_setData(const QVector<double> & independent, const QVector<double> & dependent) 
 {
-    
+    v_xdata = independent;
+    v_ydata = dependent;
+    curv_data->setRawSamples(v_xdata.data(),v_ydata.data(),v_ydata.size());
+    plt_plot->replot();
+    plt_plot->axisAutoScale(QwtPlot::xBottom);
+    plt_plot->axisAutoScale(QwtPlot::yLeft);
 }
 
 void ASCO_Parameter::sl_zoomed(const QRectF &rect) 
 {
-    qDebug() << "rect: " << rect.size();
     if(!zoomzoom->zoomRectIndex()){
-        qDebug() << "resetting" << rect.size();
             plt_plot->setAxisAutoScale(QwtPlot::xBottom,true);
             plt_plot->setAxisAutoScale(QwtPlot::yLeft,true);
             zoomzoom->setZoomBase(true);

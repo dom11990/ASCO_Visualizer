@@ -26,12 +26,12 @@ public:
 
 signals:
     void sg_appendDataPoint(const double & data_point);
-    void sg_setData(const QVector<double> & data_point);
+    void sg_setData(const QVector<double> & independent, const QVector<double> & dependent);
 
 public slots:
 
     void sl_appendDataPoint(const double & data_point);
-    void sl_setData(const QVector<double> & data_point);
+    void sl_setData(const QVector<double> & independent, const QVector<double> & dependent);
     void sl_zoomed (const QRectF &rect);
 
     

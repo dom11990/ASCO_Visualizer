@@ -7,11 +7,12 @@
 #include <QFuture>
 #include <QFile>
 #include <QCloseEvent>
+#include <QScopedPointer>
+#include <QMutex>
 
-#include "displayer.h"
 #include "qwt_plot.h"
 #include "asco_parameter.h"
-
+#include "qucs_dat.hpp"
 
 
 
@@ -47,13 +48,20 @@ signals:
     void sg_newFileLine(const QString& s_dir);
     void sg_recreateDisplayers(const QVector<ASCO_Design_Variable_Properties>& params, const QVector<ASCO_Measurement_Properties>& measurements);
     void sg_appendDataPoint(const double & data_point);
+    void sg_newIndependentVariables();
+    void sg_selectIndependent(const QString& indep);
+
 
 
 private slots:
     void on_changeQucsDirButton_clicked();
+    void sl_actionExit_triggered(bool checked);
+    void sl_actionAbout_triggered(bool checked);
     void sl_newFileLine(const QString& s_dir);
     void sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Properties>& vars, const QVector<ASCO_Measurement_Properties>& meas);
-
+    void sl_newIndependentVariables();
+    void on_cb_indepVariables_currentIndexChanged(int index);
+    void on_cb_depVariables_currentIndexChanged(int index);
 
     void on_btn_Start_clicked();
 
@@ -74,12 +82,19 @@ private:
     QMap<QString, ASCO_Design_Variable*> mw_asco_design_variable;
     QMap<QString, ASCO_Measurement *> mw_asco_measurement;
     
+    
+
 
 
     QString hostname;
     QString qucs_dir;
     QFuture<bool> fut_started;
     QAtomicInt mi_run;
+    QMutex mutex_qucs_dat;
+    QScopedPointer<Qucs_Dat> o_qucs_dat;
+    QString s_active_independent;
+    QString s_active_dependent;
+
 
     //thread
     QFile f_asco_log;
