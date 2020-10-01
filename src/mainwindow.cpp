@@ -305,10 +305,6 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
             mutex_qucs_dat.unlock();
 
             ui->w_sim_display->sg_setData(x_data,y_data);
-            qDebug() << "x_data";
-            qDebug() << x_data.at(100);
-            qDebug() << "y_data";
-            qDebug() << y_data.at(100);
             
         }
     }
