@@ -8,7 +8,7 @@
 #include <QFile>
 #include <QCloseEvent>
 #include <QScopedPointer>
-#include <QMutex>
+#include <QRecursiveMutex>
 
 #include "qwt_plot.h"
 #include "asco_parameter.h"
@@ -90,7 +90,7 @@ private:
     QString qucs_dir;
     QFuture<bool> fut_started;
     QAtomicInt mi_run;
-    QMutex mutex_qucs_dat;
+    QRecursiveMutex mutex_qucs_dat;
     QScopedPointer<Qucs_Dat> o_qucs_dat;
     QString s_active_independent;
     QString s_active_dependent;

@@ -202,7 +202,7 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
     qDebug() << "Opening log file: " << f_asco_log.open(QIODevice::ReadOnly);
 
     QString dat_file_path = QDir(qucs_dir).filePath(hostname + ".dat");
-    qDebug() << "Pulling result names from " << dat_file_path << "..." ;
+    qDebug() << "Pulling results from " << dat_file_path << "..." ;
     
     
     QScopedPointer<Qucs_Dat> new_file_to_parse(new Qucs_Dat);
@@ -213,10 +213,11 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
     mutex_qucs_dat.unlock();
     
     emit(sg_newIndependentVariables());
-
+    //TODO makwe the creation of the graphs a handshake so this thread doesnt write into plots that dont exist
+    QThread::msleep(500);
     while (mi_run)
     {
-        QThread::msleep(250);
+
 
         //    auto curve = new QwtPlotCurve;
 
@@ -292,18 +293,17 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
 
             new_file_to_parse.reset(new Qucs_Dat);
             new_file_to_parse->Parse_File(dat_file_path);
-    
-            mutex_qucs_dat.lock();
-            o_qucs_dat.swap(new_file_to_parse);
-            mutex_qucs_dat.unlock();
-
-
+            qDebug() << "Thread locking";
             QVector<double> x_data, y_data;
-            
             mutex_qucs_dat.lock();
+            //replace the existing data in the class with the new data from the parsed file
+            o_qucs_dat.swap(new_file_to_parse);
+            //load the xy data into the respective vectors
             o_qucs_dat->getData(s_active_independent, s_active_dependent,x_data,y_data);
             mutex_qucs_dat.unlock();
-
+            qDebug() << "Thread unlocking";
+            QThread::msleep(250);
+            //update the UI with the new xydata
             ui->w_sim_display->sg_setData(x_data,y_data);
             
         }
@@ -340,7 +340,8 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
 
     // create new asco parameter widgets and connect the slots
     for (ASCO_Design_Variable_Properties design_var : vars)
-    {
+    {   
+        qDebug() << "Creating Design Variable: " << design_var.s_name;
         ASCO_Design_Variable *new_var = new ASCO_Design_Variable(this);
         // connect(new_var, &ASCO_Parameter::sg_appendDataPoint, new_var, &ASCO_Parameter::sl_appendDataPoint);
         ui->scrollAreaWidgetContents->layout()->addWidget(new_var);
@@ -350,6 +351,7 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
 
     for (ASCO_Measurement_Properties measurement : meas)
     {
+        qDebug() << "Creating Measurement: " << measurement.s_name;
         ASCO_Measurement *new_var = new ASCO_Measurement(this);
         // connect(new_var, &ASCO_Parameter::sg_appendDataPoint, new_var, &ASCO_Parameter::sl_appendDataPoint);
         ui->scrollAreaWidgetContents->layout()->addWidget(new_var);
@@ -362,11 +364,11 @@ void MainWindow::sl_newIndependentVariables()
 {
     ui->cb_indepVariables->clear();
     ui->cb_indepVariables->addItem(QString(""));
-
+    qDebug() << "Main-new locking";
     mutex_qucs_dat.lock();
     ui->cb_indepVariables->addItems(o_qucs_dat->getIndependentVariables());
     mutex_qucs_dat.unlock();
-
+    qDebug() << "Main-new unlocking";
     //select the first item in the combobox
     if(ui->cb_indepVariables->count() > 1){
         ui->cb_indepVariables->setCurrentIndex(1);
@@ -376,18 +378,29 @@ void MainWindow::sl_newIndependentVariables()
 void MainWindow::on_cb_indepVariables_currentIndexChanged(int index) 
 {
     s_active_independent = ui->cb_indepVariables->currentText();
-
+    qDebug() << "active independent variable " << s_active_independent;
     ui->cb_depVariables->clear();
+    qDebug() << "Main-indep locking";
     mutex_qucs_dat.lock();
     ui->cb_depVariables->addItems(o_qucs_dat->getDependentVariables(s_active_independent));
     mutex_qucs_dat.unlock();
-    qDebug() << "active independent variable " << s_active_independent;
+    qDebug() << "Main-indep unlocking";
+    
 }
 
 void MainWindow::on_cb_depVariables_currentIndexChanged(int index) 
 {
     s_active_dependent = ui->cb_depVariables->currentText();
     qDebug() << "active dependent variable " << s_active_dependent;
+    QVector<double> x_data, y_data;
+    qDebug() << "Main-dep locking";
+    mutex_qucs_dat.lock();
+    o_qucs_dat->getData(s_active_independent, s_active_dependent,x_data,y_data);
+    mutex_qucs_dat.unlock();
+    qDebug() << "Main-dep unlocking";
+
+    ui->w_sim_display->sg_setData(x_data,y_data);
+
 }
 
 
