@@ -70,9 +70,6 @@ void MainWindow::sl_actionAbout_triggered(bool checked)
 
 void MainWindow::on_changeQucsDirButton_clicked()
 {
-
-    qDebug() << "C++ Style Info Message";
-    qDebug("C Style Info Message");
     QFileDialog dialog;
     dialog.setFilter(QDir::AllDirs | QDir::Hidden);
     dialog.setOptions(QFileDialog::ShowDirsOnly);
@@ -293,7 +290,6 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
 
             new_file_to_parse.reset(new Qucs_Dat);
             new_file_to_parse->Parse_File(dat_file_path);
-            qDebug() << "Thread locking";
             QVector<double> x_data, y_data;
             mutex_qucs_dat.lock();
             //replace the existing data in the class with the new data from the parsed file
@@ -301,7 +297,6 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
             //load the xy data into the respective vectors
             o_qucs_dat->getData(s_active_independent, s_active_dependent,x_data,y_data);
             mutex_qucs_dat.unlock();
-            qDebug() << "Thread unlocking";
             QThread::msleep(250);
             //update the UI with the new xydata
             ui->w_sim_display->sg_setData(x_data,y_data);
@@ -364,11 +359,9 @@ void MainWindow::sl_newIndependentVariables()
 {
     ui->cb_indepVariables->clear();
     ui->cb_indepVariables->addItem(QString(""));
-    qDebug() << "Main-new locking";
     mutex_qucs_dat.lock();
     ui->cb_indepVariables->addItems(o_qucs_dat->getIndependentVariables());
     mutex_qucs_dat.unlock();
-    qDebug() << "Main-new unlocking";
     //select the first item in the combobox
     if(ui->cb_indepVariables->count() > 1){
         ui->cb_indepVariables->setCurrentIndex(1);
@@ -380,11 +373,9 @@ void MainWindow::on_cb_indepVariables_currentIndexChanged(int index)
     s_active_independent = ui->cb_indepVariables->currentText();
     qDebug() << "active independent variable " << s_active_independent;
     ui->cb_depVariables->clear();
-    qDebug() << "Main-indep locking";
     mutex_qucs_dat.lock();
     ui->cb_depVariables->addItems(o_qucs_dat->getDependentVariables(s_active_independent));
     mutex_qucs_dat.unlock();
-    qDebug() << "Main-indep unlocking";
     
 }
 
@@ -393,11 +384,9 @@ void MainWindow::on_cb_depVariables_currentIndexChanged(int index)
     s_active_dependent = ui->cb_depVariables->currentText();
     qDebug() << "active dependent variable " << s_active_dependent;
     QVector<double> x_data, y_data;
-    qDebug() << "Main-dep locking";
     mutex_qucs_dat.lock();
     o_qucs_dat->getData(s_active_independent, s_active_dependent,x_data,y_data);
     mutex_qucs_dat.unlock();
-    qDebug() << "Main-dep unlocking";
 
     ui->w_sim_display->sg_setData(x_data,y_data);
 
