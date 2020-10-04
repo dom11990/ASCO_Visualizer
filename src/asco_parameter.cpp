@@ -32,10 +32,10 @@ ASCO_Parameter::ASCO_Parameter(QWidget *parent)
 
     v_ydata.reserve(buffer_size);
 
-    //create the curves and assign the raw buffers
+    //create the data curve and assign the raw buffers
     curv_data = new QwtPlotCurve();
     curv_data->setTitle( "Data" );
-    curv_data->setPen( QPen( Qt::white, 2 ) ),
+    curv_data->setPen( QPen( Qt::black, 2 ) ),
     curv_data->setRenderHint( QwtPlotItem::RenderAntialiased, true );
     curv_data->setRawSamples(v_xdata.data(),v_ydata.data(),v_ydata.size());
     curv_data->attach(plt_plot);
@@ -53,6 +53,11 @@ ASCO_Parameter::ASCO_Parameter(QWidget *parent)
     connect(this,&ASCO_Parameter::sg_setData, this, &ASCO_Parameter::sl_setData);
     connect(this,&ASCO_Parameter::sg_appendDataPoint, this, &ASCO_Parameter::sl_appendDataPoint);
 
+}
+
+ASCO_Parameter::~ASCO_Parameter() 
+{
+    delete o_properties;
 }
 
 void ASCO_Parameter::setTitle(const QString& title) 
@@ -91,39 +96,3 @@ void ASCO_Parameter::sl_zoomed(const QRectF &rect)
 }
 
 
-
-
-ASCO_Measurement::ASCO_Measurement(QWidget *parent) : ASCO_Parameter(parent)
-{
-
-}
-
-void ASCO_Measurement::setProperties(const ASCO_Measurement_Properties& new_props) 
-{
-    delete o_properties;
-    ASCO_Measurement_Properties * properties = new ASCO_Measurement_Properties();
-    properties->d_limit = new_props.d_limit;
-    properties->s_compare = new_props.s_compare;  
-    properties->s_name = new_props.s_name;
-    setTitle(new_props.s_name);
-    o_properties = properties;
-}
-
-
-ASCO_Design_Variable::ASCO_Design_Variable(QWidget *parent) : ASCO_Parameter(parent)
-{
-
-}
-
-void ASCO_Design_Variable::setProperties(const ASCO_Design_Variable_Properties & new_props) 
-{
-    delete o_properties;
-    ASCO_Design_Variable_Properties * properties = new ASCO_Design_Variable_Properties();
-    properties->d_initial = new_props.d_initial;
-    properties->d_max = new_props.d_max;
-    properties->d_min = new_props.d_min;
-    properties->s_interpolate = new_props.s_interpolate;
-    properties->s_name = new_props.s_name;
-    setTitle(new_props.s_name);
-    o_properties = properties;
-}

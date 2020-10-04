@@ -19,7 +19,6 @@
 #include "asco_design_variable_properties.hpp"
 #include "asco_measurement_properties.hpp"
 
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
                                           ui(new Ui::MainWindow)
 {
@@ -181,11 +180,19 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
             meas.s_compare = match.captured(2);
             meas.d_limit = match.captured(3).toDouble();
             new_meas.append(meas);
+            qDebug() << measurement;
             measurement = stream.readLine();
         }
-
+        qDebug() << "Measurements: " << new_meas.size();
+        qDebug() << "Variables: " << new_vars.size();
         //now tell ui to create an appropriate number of graphs
         emit sg_recreateDisplayers(new_vars, new_meas);
+
+        //TODO makwe the creation of the graphs a handshake so this thread doesnt write into plots that dont exist
+        while (!mi_displays_ready)
+        {
+            QThread::msleep(100);
+        }
     }
     else
     {
@@ -199,27 +206,24 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
     qDebug() << "Opening log file: " << f_asco_log.open(QIODevice::ReadOnly);
 
     QString dat_file_path = QDir(qucs_dir).filePath(hostname + ".dat");
-    qDebug() << "Pulling results from " << dat_file_path << "..." ;
-    
-    
+    qDebug() << "Pulling results from " << dat_file_path << "...";
+
     QScopedPointer<Qucs_Dat> new_file_to_parse(new Qucs_Dat);
     new_file_to_parse->Parse_File(dat_file_path);
-    
+
     mutex_qucs_dat.lock();
     o_qucs_dat.swap(new_file_to_parse);
     mutex_qucs_dat.unlock();
-    
+    mi_displays_ready = 0;
     emit(sg_newIndependentVariables());
-    //TODO makwe the creation of the graphs a handshake so this thread doesnt write into plots that dont exist
-    QThread::msleep(500);
+
     while (mi_run)
     {
-
 
         //    auto curve = new QwtPlotCurve;
 
         //build a custom regex to match the exact number of goals and parameters in the asco_netlist.cfg file that was parsed earlier
-        QString regex_measurement("\\s+?([-|\\+])(.+?):(.+?):");
+        QString regex_measurement("\\s+([-|\\+]*)(.+?):(.+?):");
         QString regex_parameter("\\s*(.+?):(.+?):");
         QString full_regex_string("([-|\\+])cost:(.+?):");
 
@@ -252,55 +256,47 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
             newline = newline.trimmed();
             //we have our line! now match on it
             QRegularExpressionMatch match = regex.match(newline);
-
-            // QStringList list =  match.capturedTexts();
-            // int l = 0;
-            // qDebug() << newline;
-            // qDebug() << "match size " << match.lastCapturedIndex();
-
-            // for(QString s : list){
-            //     qDebug() << "match " << l << ":" << s;
-            //     l++;
-            // }
-
-            //first two are the cost and whether or not all goals are met
-            QString cost = match.captured(match_index + 1);
-            double cost_value = match.captured(match_index + 2).toDouble();
-            match_index += 2;
-            emit(w_cost->sg_appendDataPoint(cost_value));
-
-            for (auto s : mw_asco_measurement)
+            if (match.hasMatch())
             {
-                QString good = match.captured(match_index + 1);
-                QString name = match.captured(match_index + 2);
-                double value = match.captured(match_index + 3).toDouble();
-                match_index += 3;
-                emit(mw_asco_measurement[name]->sg_appendDataPoint(value));
-            }
 
-            for (auto &s : mw_asco_design_variable)
-            {
-                QString name = match.captured(match_index + 1);
-                double value = match.captured(match_index + 2).toDouble();
+                //first two are the cost and whether or not all goals are met
+                QString cost = match.captured(match_index + 1);
+                double cost_value = match.captured(match_index + 2).toDouble();
                 match_index += 2;
-                emit(mw_asco_design_variable[name]->sg_appendDataPoint(value));
+                emit(w_cost->sg_appendDataPoint(cost_value));
+
+                for (auto s : mw_asco_measurement)
+                {
+                    QString good = match.captured(match_index + 1);
+                    QString name = match.captured(match_index + 2);
+                    double value = match.captured(match_index + 3).toDouble();
+                    match_index += 3;
+                    emit(mw_asco_measurement[name]->sg_appendDataPoint(value));
+                }
+
+                for (auto &s : mw_asco_design_variable)
+                {
+                    QString name = match.captured(match_index + 1);
+                    double value = match.captured(match_index + 2).toDouble();
+                    match_index += 2;
+                    emit(mw_asco_design_variable[name]->sg_appendDataPoint(value));
+                }
+
+                //now update the data display
+
+                new_file_to_parse.reset(new Qucs_Dat);
+                new_file_to_parse->Parse_File(dat_file_path);
+                QVector<double> x_data, y_data;
+                mutex_qucs_dat.lock();
+                //replace the existing data in the class with the new data from the parsed file
+                o_qucs_dat.swap(new_file_to_parse);
+                //load the xy data into the respective vectors
+                o_qucs_dat->getData(s_active_independent, s_active_dependent, x_data, y_data);
+                mutex_qucs_dat.unlock();
+                QThread::msleep(250);
+                //update the UI with the new xydata
+                ui->w_sim_display->sg_setData(x_data, y_data);
             }
-
-            //now update the data display
-
-            new_file_to_parse.reset(new Qucs_Dat);
-            new_file_to_parse->Parse_File(dat_file_path);
-            QVector<double> x_data, y_data;
-            mutex_qucs_dat.lock();
-            //replace the existing data in the class with the new data from the parsed file
-            o_qucs_dat.swap(new_file_to_parse);
-            //load the xy data into the respective vectors
-            o_qucs_dat->getData(s_active_independent, s_active_dependent,x_data,y_data);
-            mutex_qucs_dat.unlock();
-            QThread::msleep(250);
-            //update the UI with the new xydata
-            ui->w_sim_display->sg_setData(x_data,y_data);
-            
         }
     }
 
@@ -335,7 +331,7 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
 
     // create new asco parameter widgets and connect the slots
     for (ASCO_Design_Variable_Properties design_var : vars)
-    {   
+    {
         qDebug() << "Creating Design Variable: " << design_var.s_name;
         ASCO_Design_Variable *new_var = new ASCO_Design_Variable(this);
         // connect(new_var, &ASCO_Parameter::sg_appendDataPoint, new_var, &ASCO_Parameter::sl_appendDataPoint);
@@ -353,6 +349,7 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
         new_var->setProperties(measurement);
         mw_asco_measurement[measurement.s_name] = new_var;
     }
+    mi_displays_ready = 1;
 }
 
 void MainWindow::sl_newIndependentVariables()
@@ -363,12 +360,13 @@ void MainWindow::sl_newIndependentVariables()
     ui->cb_indepVariables->addItems(o_qucs_dat->getIndependentVariables());
     mutex_qucs_dat.unlock();
     //select the first item in the combobox
-    if(ui->cb_indepVariables->count() > 1){
+    if (ui->cb_indepVariables->count() > 1)
+    {
         ui->cb_indepVariables->setCurrentIndex(1);
     }
 }
 
-void MainWindow::on_cb_indepVariables_currentIndexChanged(int index) 
+void MainWindow::on_cb_indepVariables_currentIndexChanged(int index)
 {
     s_active_independent = ui->cb_indepVariables->currentText();
     qDebug() << "active independent variable " << s_active_independent;
@@ -376,22 +374,19 @@ void MainWindow::on_cb_indepVariables_currentIndexChanged(int index)
     mutex_qucs_dat.lock();
     ui->cb_depVariables->addItems(o_qucs_dat->getDependentVariables(s_active_independent));
     mutex_qucs_dat.unlock();
-    
 }
 
-void MainWindow::on_cb_depVariables_currentIndexChanged(int index) 
+void MainWindow::on_cb_depVariables_currentIndexChanged(int index)
 {
     s_active_dependent = ui->cb_depVariables->currentText();
     qDebug() << "active dependent variable " << s_active_dependent;
     QVector<double> x_data, y_data;
     mutex_qucs_dat.lock();
-    o_qucs_dat->getData(s_active_independent, s_active_dependent,x_data,y_data);
+    o_qucs_dat->getData(s_active_independent, s_active_dependent, x_data, y_data);
     mutex_qucs_dat.unlock();
 
-    ui->w_sim_display->sg_setData(x_data,y_data);
-
+    ui->w_sim_display->sg_setData(x_data, y_data);
 }
-
 
 void MainWindow::sl_newFileLine(const QString &s_dir)
 {

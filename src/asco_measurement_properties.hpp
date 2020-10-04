@@ -13,7 +13,7 @@ class ASCO_Measurement_Properties : public ASCO_Parameter_Properties
 	public:
 
 		ASCO_Measurement_Properties();
-		~ASCO_Measurement_Properties();
+		virtual ~ASCO_Measurement_Properties();
 
 		QString s_name;
 		QString s_compare;

@@ -9,7 +9,7 @@ class ASCO_Design_Variable_Properties  : public ASCO_Parameter_Properties
 	public:
 
 		ASCO_Design_Variable_Properties();
-		~ASCO_Design_Variable_Properties();
+		virtual ~ASCO_Design_Variable_Properties();
 
 		double d_initial;
 		double d_min;

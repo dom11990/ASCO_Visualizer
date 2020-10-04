@@ -11,7 +11,8 @@
 #include <QRecursiveMutex>
 
 #include "qwt_plot.h"
-#include "asco_parameter.h"
+#include "asco_measurement.hpp"
+#include "asco_design_variable.hpp"
 #include "qucs_dat.hpp"
 
 
@@ -90,6 +91,7 @@ private:
     QString qucs_dir;
     QFuture<bool> fut_started;
     QAtomicInt mi_run;
+    QAtomicInt mi_displays_ready;
     QRecursiveMutex mutex_qucs_dat;
     QScopedPointer<Qucs_Dat> o_qucs_dat;
     QString s_active_independent;

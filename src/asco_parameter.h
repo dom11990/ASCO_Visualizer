@@ -19,10 +19,11 @@ class ASCO_Parameter : public QWidget
     Q_OBJECT
 public:
     explicit ASCO_Parameter(QWidget *parent = nullptr);
+    virtual ~ASCO_Parameter();
     void setTitle(const QString& title);
 
 
-
+protected:
 
 signals:
     void sg_appendDataPoint(const double & data_point);
@@ -30,11 +31,14 @@ signals:
 
 public slots:
 
-    void sl_appendDataPoint(const double & data_point);
-    void sl_setData(const QVector<double> & independent, const QVector<double> & dependent);
+    virtual void sl_appendDataPoint(const double & data_point);
+    virtual void sl_setData(const QVector<double> & independent, const QVector<double> & dependent);
     void sl_zoomed (const QRectF &rect);
 
     
+
+
+
 
 //Data
 public:
@@ -42,42 +46,21 @@ public:
     QString s_name;
     ASCO_Parameter_Properties * o_properties;
 
-private:
+protected:
     //UI Elements
     QLabel* lbl_label;
     QwtPlot* plt_plot;
     QVBoxLayout *lay_mainLayout;
     QwtPlotCurve * curv_data;
+
     QVector<double> v_ydata;
     QVector<double> v_xdata;   
     QwtPlotZoomer * zoomzoom;
 };
 
 
-class ASCO_Measurement : public ASCO_Parameter
-{
-    public:
-        explicit ASCO_Measurement(QWidget *parent = nullptr);
-        void setProperties(const ASCO_Measurement_Properties& new_props);
-
-    private:
-        QwtPlotCurve * curv_limit;
-
-};
 
 
-
-class ASCO_Design_Variable : public ASCO_Parameter
-{
-public:
-    explicit ASCO_Design_Variable(QWidget *parent = nullptr);
-    void setProperties(const ASCO_Design_Variable_Properties & new_props);
-
-private:
-        QwtPlotCurve * curv_min;
-        QwtPlotCurve * curv_max;
-        QwtPlotCurve * curv_initial;
-};
 
 
 
