@@ -9,6 +9,9 @@
 #include <QCloseEvent>
 #include <QScopedPointer>
 #include <QRecursiveMutex>
+#include <QMutex>
+#include <QFileSystemWatcher>
+
 
 #include "qwt_plot.h"
 #include "asco_measurement.hpp"
@@ -54,13 +57,19 @@ signals:
 
 
 
-private slots:
+public slots:
     void on_changeQucsDirButton_clicked();
     void sl_actionExit_triggered(bool checked);
     void sl_actionAbout_triggered(bool checked);
     void sl_newFileLine(const QString& s_dir);
     void sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Properties>& vars, const QVector<ASCO_Measurement_Properties>& meas);
     void sl_newIndependentVariables();
+    void sl_fileChanged(const QString& path);
+    void sl_newSimulationStarted();
+    void sl_smulationFinished();
+
+
+
     void on_cb_indepVariables_currentIndexChanged(int index);
     void on_cb_depVariables_currentIndexChanged(int index);
 
@@ -93,7 +102,12 @@ private:
     QAtomicInt mi_run;
     QAtomicInt mi_displays_ready;
     QRecursiveMutex mutex_qucs_dat;
+
     QScopedPointer<Qucs_Dat> o_qucs_dat;
+    QScopedPointer<QFileSystemWatcher> o_watcher;
+    QMutex m_file_update;
+
+
     QString s_active_independent;
     QString s_active_dependent;
 

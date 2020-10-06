@@ -25,6 +25,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     //initialize variables
     o_qucs_dat.reset(new Qucs_Dat());
+    o_watcher.reset(new QFileSystemWatcher());
+    //the file watcher will release it when an update occurs
+    m_file_update.lock();
 
     //initialize UI
     ui->setupUi(this);
@@ -46,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(this, &MainWindow::sg_recreateDisplayers, this, &MainWindow::sl_recreateDisplayers);
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::sl_actionExit_triggered);
     connect(this, &MainWindow::sg_newIndependentVariables, this, &MainWindow::sl_newIndependentVariables);
+    connect(o_watcher.get(), &QFileSystemWatcher::fileChanged, this, &MainWindow::sl_fileChanged);
 
     // connect(this,&MainWindow::sg_newPlotPoints,this,&MainWindow::sl_newPlotPoints);
 }
@@ -113,9 +117,12 @@ void MainWindow::stopFileThread()
 {
     if (mi_run)
     {
+        //stops the while loop
         mi_run = false;
+        //allows the code to read the file
+        m_file_update.unlock();
+        //thread should exit after the file check
         fut_started.waitForFinished();
-        f_asco_log.close();
         ui->btn_Start->setEnabled(true);
     }
 }
@@ -217,30 +224,33 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
     mi_displays_ready = 0;
     emit(sg_newIndependentVariables());
 
+    //set up the file watcher
+    qDebug() << "attaching to: " << f_asco_log.fileName();
+    o_watcher->addPath(f_asco_log.fileName());
+    qDebug() << o_watcher->files();
+
+    //build a custom regex to match the exact number of goals and parameters in the asco_netlist.cfg file that was parsed earlier
+    QString regex_measurement("\\s+([-|\\+]*)(.+?):(.+?):");
+    QString regex_parameter("\\s*(.+?):(.+?):");
+    QString full_regex_string("([-|\\+])cost:(.+?):");
+
+    for (auto s : mw_asco_measurement)
+    {
+        full_regex_string += regex_measurement;
+    }
+    for (auto s : mw_asco_design_variable)
+    {
+        full_regex_string += regex_parameter;
+    }
+    QRegularExpression regex(full_regex_string);
+    //ready to match on the latest line read from the file in the loop
+    char buffer[1024];
+    QString newline("");
+
     while (mi_run)
     {
 
-        //    auto curve = new QwtPlotCurve;
-
-        //build a custom regex to match the exact number of goals and parameters in the asco_netlist.cfg file that was parsed earlier
-        QString regex_measurement("\\s+([-|\\+]*)(.+?):(.+?):");
-        QString regex_parameter("\\s*(.+?):(.+?):");
-        QString full_regex_string("([-|\\+])cost:(.+?):");
-
-        for (auto s : mw_asco_measurement)
-        {
-            full_regex_string += regex_measurement;
-        }
-        for (auto s : mw_asco_design_variable)
-        {
-            full_regex_string += regex_parameter;
-        }
-        QRegularExpression regex(full_regex_string);
-        //ready to match on the latest line read from the file
-
-        char buffer[1024];
-
-        QString newline("");
+        m_file_update.lock();
         int linelength;
         do
         {
@@ -249,7 +259,6 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
                 newline = QString(buffer);
         } while (linelength > 0);
 
-        // qDebug() << "pos: " << f_asco_log.pos();
         if (!newline.isEmpty())
         {
             int match_index = 0;
@@ -258,7 +267,6 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
             QRegularExpressionMatch match = regex.match(newline);
             if (match.hasMatch())
             {
-
                 //first two are the cost and whether or not all goals are met
                 QString cost = match.captured(match_index + 1);
                 double cost_value = match.captured(match_index + 2).toDouble();
@@ -293,12 +301,15 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
                 //load the xy data into the respective vectors
                 o_qucs_dat->getData(s_active_independent, s_active_dependent, x_data, y_data);
                 mutex_qucs_dat.unlock();
-                QThread::msleep(250);
                 //update the UI with the new xydata
                 ui->w_sim_display->sg_setData(x_data, y_data);
+            }else {
+                qDebug() << "Wtf we didn't get a match on line:" << newline;
             }
         }
     }
+    
+    f_asco_log.close();
 
     return true;
 }
@@ -364,6 +375,11 @@ void MainWindow::sl_newIndependentVariables()
     {
         ui->cb_indepVariables->setCurrentIndex(1);
     }
+}
+
+void MainWindow::sl_fileChanged(const QString &path)
+{
+    m_file_update.unlock();
 }
 
 void MainWindow::on_cb_indepVariables_currentIndexChanged(int index)
