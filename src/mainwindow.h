@@ -55,20 +55,21 @@ signals:
 
 
 private slots:
+
+// UI
     void on_changeQucsDirButton_clicked();
     void sl_actionExit_triggered(bool checked);
     void sl_actionAbout_triggered(bool checked);
-    void sl_newFileLine(const QString& s_dir);
     void sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Properties>& vars, const QVector<ASCO_Measurement_Properties>& meas);
     void sl_newIndependentVariables();
     void on_cb_indepVariables_currentIndexChanged(int index);
     void on_cb_depVariables_currentIndexChanged(int index);
-
     void on_btn_Start_clicked();
-
     void on_btn_Stop_clicked();
-
     void on_le_pathDisplay_textChanged(const QString &arg1);
+
+// Thread
+    void sl_updateParameters(const QStringList &parameters, const QVector<double> &values);
 
 private:
     QString FindQucsDir();

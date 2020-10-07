@@ -35,7 +35,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     qDebug() << "before" << p_handler.get();
     p_handler->moveToThread(pt_handler.get());
     qDebug() << "after" << p_handler.get();
-    connect(this, &MainWindow::sg_newQucsDir, p_handler.get(),&ASCO_Handler::newQucsDir);
+    connect(this, &MainWindow::sg_newQucsDir, p_handler.get(),&ASCO_Handler::sl_newQucsDir);
+    connect(p_handler.get(), &ASCO_Handler::sg_updateParameters, this, &MainWindow::sl_updateParameters);
+
+
     pt_handler->start();
     qDebug() << "thread running:" << pt_handler->isRunning();
 
@@ -56,7 +59,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     qRegisterMetaType<QVector<ASCO_Design_Variable_Properties>>("QVector<ASCO_Design_Variable_Properties>");
     qRegisterMetaType<QVector<ASCO_Measurement_Properties>>("QVector<ASCO_Measurement_Properties>");
 
-    connect(this, &MainWindow::sg_newFileLine, this, &MainWindow::sl_newFileLine);
     // connect(this, &MainWindow::sg_recreateDisplayers, this, &MainWindow::sl_recreateDisplayers);
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::sl_actionExit_triggered);
     connect(this, &MainWindow::sg_newIndependentVariables, this, &MainWindow::sl_newIndependentVariables);
@@ -238,8 +240,6 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
 
     while (mi_run)
     {
-
-        //    auto curve = new QwtPlotCurve;
 
         //build a custom regex to match the exact number of goals and parameters in the asco_netlist.cfg file that was parsed earlier
         QString regex_measurement("\\s+([-|\\+]*)(.+?):(.+?):");
@@ -431,4 +431,9 @@ void MainWindow::on_btn_Stop_clicked()
 void MainWindow::on_le_pathDisplay_textChanged(const QString &arg1)
 {
     SetQucsDir(arg1);
+}
+
+void MainWindow::sl_updateParameters(const QStringList &parameters, const QVector<double> &values) 
+{
+    
 }

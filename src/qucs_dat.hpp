@@ -23,7 +23,7 @@ public:
 	QStringList getDependentVariables(const QString& indepdenent_var);
 	QStringList getIndependentVariables(int min_size = 2);
 	bool getData(const QString & indep_name, const QString & dep_name, QVector<double>& indep_data, QVector<double>& dep_data);
-
+	bool exists(const QString &indep_name, const QString & dep_name);
 private:
 	void Parse_Data(QFile &file, QVector<Qucs_Numeric_Data_t>& vector);
 	Qucs_Map_Data_t m_data;
