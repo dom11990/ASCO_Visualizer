@@ -14,7 +14,7 @@
 #include "asco_measurement.hpp"
 #include "asco_design_variable.hpp"
 #include "qucs_dat.hpp"
-
+#include "asco_handler.hpp"
 
 
 
@@ -99,6 +99,8 @@ private:
 
 
     //thread
+    QScopedPointer<QThread> pt_handler;
+    QScopedPointer<ASCO_Handler> p_handler;
     QFile f_asco_log;
 
 };

@@ -35,7 +35,7 @@ ASCO_Parameter::ASCO_Parameter(QWidget *parent)
     //create the data curve and assign the raw buffers
     curv_data = new QwtPlotCurve();
     curv_data->setTitle( "Data" );
-    curv_data->setPen( QPen( Qt::black, 2 ) ),
+    curv_data->setPen( QPen( Qt::white, 2 ) ),
     curv_data->setRenderHint( QwtPlotItem::RenderAntialiased, true );
     curv_data->setRawSamples(v_xdata.data(),v_ydata.data(),v_ydata.size());
     curv_data->attach(plt_plot);

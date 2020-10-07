@@ -29,11 +29,26 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     //initialize UI
     ui->setupUi(this);
 
+
+    pt_handler.reset(new QThread);
+    p_handler.reset(new ASCO_Handler);
+    qDebug() << "before" << p_handler.get();
+    p_handler->moveToThread(pt_handler.get());
+    qDebug() << "after" << p_handler.get();
+    connect(this, &MainWindow::sg_newQucsDir, p_handler.get(),&ASCO_Handler::newQucsDir);
+    pt_handler->start();
+    qDebug() << "thread running:" << pt_handler->isRunning();
+
+
+
     // ui->w_sim_display->hide();
 
     qucs_dir = FindQucsDir();
     ui->le_pathDisplay->setText(qucs_dir);
     //TODO emit here tu update the le_pathDisplay
+
+
+
 
     //update default values
     hostname = QHostInfo::localHostName();
@@ -41,19 +56,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     qRegisterMetaType<QVector<ASCO_Design_Variable_Properties>>("QVector<ASCO_Design_Variable_Properties>");
     qRegisterMetaType<QVector<ASCO_Measurement_Properties>>("QVector<ASCO_Measurement_Properties>");
 
-    connect(this, &MainWindow::sg_newQucsDir, ui->le_pathDisplay, &QLineEdit::setText);
     connect(this, &MainWindow::sg_newFileLine, this, &MainWindow::sl_newFileLine);
-    connect(this, &MainWindow::sg_recreateDisplayers, this, &MainWindow::sl_recreateDisplayers);
+    // connect(this, &MainWindow::sg_recreateDisplayers, this, &MainWindow::sl_recreateDisplayers);
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::sl_actionExit_triggered);
     connect(this, &MainWindow::sg_newIndependentVariables, this, &MainWindow::sl_newIndependentVariables);
 
+    connect(p_handler.get(), &ASCO_Handler::sg_simulationStarted, this, &MainWindow::sl_recreateDisplayers);
+
     // connect(this,&MainWindow::sg_newPlotPoints,this,&MainWindow::sl_newPlotPoints);
+
 }
 
 MainWindow::~MainWindow()
 {
     mi_run = 0;
-    delete ui;
+    pt_handler->quit();
+    pt_handler->wait();
+    // delete ui;
 }
 
 void MainWindow::sl_actionExit_triggered(bool checked)
@@ -125,80 +144,80 @@ bool MainWindow::threadFileRead(const QString &s_filepath)
 
     mi_run = 1;
 
-    QFile asco_cfg(QDir(qucs_dir).filePath("asco_netlist.cfg"));
-    if (asco_cfg.open(QIODevice::ReadOnly))
-    {
+    // QFile asco_cfg(QDir(qucs_dir).filePath("asco_netlist.cfg"));
+    // if (asco_cfg.open(QIODevice::ReadOnly))
+    // {
 
-        //Read out the asco_netlist.cfg file and get all the parameters and optimization goals
+    //     //Read out the asco_netlist.cfg file and get all the parameters and optimization goals
 
-        QString cfg_file_contents = asco_cfg.readAll();
-        asco_cfg.close();
+    //     QString cfg_file_contents = asco_cfg.readAll();
+    //     asco_cfg.close();
 
-        //extract the parameters
-        QRegularExpression regex("Parameter (\\d+):#(.+?)#:(.+?):(.+?):(.+?):(.+?):(.+?)\\s");
-        QRegularExpressionMatchIterator it_match = regex.globalMatch(cfg_file_contents);
+    //     //extract the parameters
+    //     QRegularExpression regex("Parameter (\\d+):#(.+?)#:(.+?):(.+?):(.+?):(.+?):(.+?)\\s");
+    //     QRegularExpressionMatchIterator it_match = regex.globalMatch(cfg_file_contents);
 
-        QVector<ASCO_Design_Variable_Properties> new_vars;
-        qDebug() << "Extracting parameters and goals...";
-        while (it_match.hasNext())
-        {
-            QRegularExpressionMatch match = it_match.next();
-            ASCO_Design_Variable_Properties var;
-            var.s_name = match.captured(2);
-            var.d_initial = match.captured(3).toDouble();
-            var.d_min = match.captured(4).toDouble();
-            var.d_max = match.captured(5).toDouble();
-            var.s_interpolate = match.captured(6);
-            var.s_optimize = match.captured(7);
-            new_vars.append(var);
-        }
+    //     QVector<ASCO_Design_Variable_Properties> new_vars;
+    //     // qDebug() << "Extracting parameters and goals...";
+    //     while (it_match.hasNext())
+    //     {
+    //         QRegularExpressionMatch match = it_match.next();
+    //         ASCO_Design_Variable_Properties var;
+    //         var.s_name = match.captured(2);
+    //         var.d_initial = match.captured(3).toDouble();
+    //         var.d_min = match.captured(4).toDouble();
+    //         var.d_max = match.captured(5).toDouble();
+    //         var.s_interpolate = match.captured(6);
+    //         var.s_optimize = match.captured(7);
+    //         new_vars.append(var);
+    // }
 
-        //extract the measurements
-        //# Measurements #
-        //in_band_s11:---:LE:-10
-        //LO_suppresion:---:LE:-40
-        //low_band_supp:---:LE:-15
-        //in_band_gain:---:GE:-5
-        //#
+    //     //extract the measurements
+    //     //# Measurements #
+    //     //in_band_s11:---:LE:-10
+    //     //LO_suppresion:---:LE:-40
+    //     //low_band_supp:---:LE:-15
+    //     //in_band_gain:---:GE:-5
+    //     //#
 
-        regex.setPattern("# +Measurements +#\\n([\\s\\S])+?#");
-        QRegularExpressionMatch match = regex.match(cfg_file_contents);
-        QString measurements(cfg_file_contents.mid(match.capturedStart(), match.capturedLength()));
-        QTextStream stream(&measurements);
+    //     regex.setPattern("# +Measurements +#\\n([\\s\\S])+?#");
+    //     QRegularExpressionMatch match = regex.match(cfg_file_contents);
+    //     QString measurements(cfg_file_contents.mid(match.capturedStart(), match.capturedLength()));
+    //     QTextStream stream(&measurements);
 
-        regex.setPattern("(.+?):(?:.+?):(.+?):(.+)");
-        QString measurement;
-        //read out the # Measurement line
-        stream.readLine();
-        measurement = stream.readLine();
-        QVector<ASCO_Measurement_Properties> new_meas;
-        while (!measurement.isEmpty() && measurement.compare("#"))
-        {
-            match = regex.match(measurement);
-            ASCO_Measurement_Properties meas;
-            meas.s_name = match.captured(1);
-            meas.s_compare = match.captured(2);
-            meas.d_limit = match.captured(3).toDouble();
-            new_meas.append(meas);
-            qDebug() << measurement;
-            measurement = stream.readLine();
-        }
-        qDebug() << "Measurements: " << new_meas.size();
-        qDebug() << "Variables: " << new_vars.size();
-        //now tell ui to create an appropriate number of graphs
-        emit sg_recreateDisplayers(new_vars, new_meas);
+    //     regex.setPattern("(.+?):(?:.+?):(.+?):(.+)");
+    //     QString measurement;
+    //     //read out the # Measurement line
+    //     stream.readLine();
+    //     measurement = stream.readLine();
+    //     QVector<ASCO_Measurement_Properties> new_meas;
+    //     while (!measurement.isEmpty() && measurement.compare("#"))
+    //     {
+    //         match = regex.match(measurement);
+    //         ASCO_Measurement_Properties meas;
+    //         meas.s_name = match.captured(1);
+    //         meas.s_compare = match.captured(2);
+    //         meas.d_limit = match.captured(3).toDouble();
+    //         new_meas.append(meas);
+    //         qDebug() << measurement;
+    //         measurement = stream.readLine();
+    //     }
+    //     // qDebug() << "Measurements: " << new_meas.size();
+    //     // qDebug() << "Variables: " << new_vars.size();
+    //     //now tell ui to create an appropriate number of graphs
+    //     emit sg_recreateDisplayers(new_vars, new_meas);
 
-        //TODO makwe the creation of the graphs a handshake so this thread doesnt write into plots that dont exist
-        while (!mi_displays_ready)
-        {
-            QThread::msleep(100);
-        }
-    }
-    else
-    {
-        qDebug() << "Failed to open asco_netlist.cfg";
-        return false;
-    }
+    //     //TODO makwe the creation of the graphs a handshake so this thread doesnt write into plots that dont exist
+    //     while (!mi_displays_ready)
+    //     {
+    //         QThread::msleep(100);
+    //     }
+    // }
+    // else
+    // {
+    //     qDebug() << "Failed to open asco_netlist.cfg";
+    //     return false;
+    // }
 
     //open the log file and move to the end of the file since
     //it does not get automatically cleared between runs
@@ -386,13 +405,6 @@ void MainWindow::on_cb_depVariables_currentIndexChanged(int index)
     mutex_qucs_dat.unlock();
 
     ui->w_sim_display->sg_setData(x_data, y_data);
-}
-
-void MainWindow::sl_newFileLine(const QString &s_dir)
-{
-    Q_UNUSED(s_dir);
-
-    return;
 }
 
 void MainWindow::on_btn_Start_clicked()

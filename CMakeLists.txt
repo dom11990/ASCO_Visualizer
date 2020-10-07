@@ -37,7 +37,9 @@ set ( CXX_SRCS
     src/asco_parameter_properties.cpp
     src/asco_measurement.cpp
     src/asco_design_variable.cpp
+    src/asco_handler.cpp
     src/qucs_dat.cpp
+    src/asco_handler.cpp
 )
  
 
