@@ -12,7 +12,7 @@ ASCO_Handler::ASCO_Handler(QObject *parent) : QObject(parent)
     watch_sim_start.reset(new QFileSystemWatcher);
     s_hostname = QHostInfo::localHostName();
     b_sim_running = false;
-
+    b_enabled = true;
     //connect internal signals and slots
 
     connect(watch_sim_updates.get(), &QFileSystemWatcher::fileChanged, this, &ASCO_Handler::sl_simulationUpdate);
@@ -124,9 +124,10 @@ void ASCO_Handler::parseHostnameLogFile()
     int result = f_hostname_log.readLine(buffer, sizeof(buffer));
     if (result < 0)
     {
-        if(!f_hostname_log.isOpen()){
+        if (!f_hostname_log.isOpen())
+        {
             openHostnameLogFile(true);
-            qWarning() <<  "The log file session is no longer valid. It has been reloaded: " << f_hostname_log.isOpen();
+            qWarning() << "The log file session is no longer valid. It has been reloaded: " << f_hostname_log.isOpen();
         }
     }
     QString newline(buffer);
@@ -135,7 +136,6 @@ void ASCO_Handler::parseHostnameLogFile()
     if (!newline.isEmpty())
     {
         int match_index = 0;
-        QStringList params;
         QVector<double> values;
         newline = newline.trimmed();
         //we have our line! now match on it
@@ -146,33 +146,34 @@ void ASCO_Handler::parseHostnameLogFile()
             //first two are the cost and whether or not all goals are met
             QString cost = match.captured(match_index + 1);
             double cost_value = match.captured(match_index + 2).toDouble();
+            emit sg_updateCost(cost_value);
             match_index += 2;
             // emit(w_cost->sg_appendDataPoint(cost_value));
-
+            values.clear();
             for (QString &s : s_measurements)
             {
                 QString good = match.captured(match_index + 1);
                 QString name = match.captured(match_index + 2);
                 double value = match.captured(match_index + 3).toDouble();
                 match_index += 3;
-                params.append(name);
                 values.append(value);
-                // emit(mw_asco_measurement[name]->sg_appendDataPoint(value));
             }
+            //notify slots of new measurements
+            emit sg_updateMeasurements(s_measurements, values);
 
+            values.clear();
             for (QString &s : s_design_variables)
             {
                 QString name = match.captured(match_index + 1);
                 double value = match.captured(match_index + 2).toDouble();
                 match_index += 2;
-                params.append(name);
                 values.append(value);
-                // emit(mw_asco_design_variable[name]->sg_appendDataPoint(value));
             }
+            //notify slots of new design variable values
+            emit sg_updateDesignVariables(s_design_variables, values);
 
             // parse the sim data file and emit the selected data
             parseDatFile();
-            emit sg_updateParameters(params,values);
         }
     }
 }
@@ -190,6 +191,7 @@ void ASCO_Handler::parseDatFile(bool emit_variables)
     }
     if (emit_variables)
     {
+        qDebug() << vars;
         emit sg_availableResults(vars);
     }
 
@@ -236,6 +238,20 @@ void ASCO_Handler::sl_selectDataToEmit(const QString &independent_variable, cons
     }
 }
 
+void ASCO_Handler::sl_getResult(const QString &s_active_independent, const QString &s_active_dependent)
+{
+    QVector<double> x_data, y_data;
+    if (o_qucs_dat->getData(s_independent_variable, s_dependent_variable, x_data, y_data))
+    {
+        emit sg_updateResult(x_data, y_data);
+    }
+}
+
+void ASCO_Handler::sl_setEnable(const bool &enable)
+{
+    b_enabled = enable;
+}
+
 void ASCO_Handler::sl_newQucsDir(const QString &path)
 {
     watch_sim_updates->removePaths(watch_sim_updates->files());
@@ -255,13 +271,16 @@ void ASCO_Handler::sl_simulationUpdate(const QString &path)
 {
     //todo reset the timer
     //read the new data
-    if (!b_sim_running)
+    if (b_enabled)
     {
-        //simulation wasnt running, now it is
-        b_sim_running = true;
-        //emits sg_simulationStarted with all the parameters and measurements
-        parseNetlistFile();
-        parseDatFile(true);
+        if (!b_sim_running)
+        {
+            //simulation wasnt running, now it is
+            b_sim_running = true;
+            //emits sg_simulationStarted with all the parameters and measurements
+            parseNetlistFile();
+            parseDatFile(true);
+        }
+        parseHostnameLogFile();
     }
-    parseHostnameLogFile();
 }

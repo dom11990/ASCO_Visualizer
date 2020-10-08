@@ -41,17 +41,23 @@ signals:
 	//emitted on simulation start to notify the UI what results (ex: S paramaeters) are available from the optimizer
 	void sg_availableResults(const QMap<QString, QStringList> &results);
 	
-	//emitted when a new simulation completed
+	//emitted when a new simulation completed but before the results are parsed
 	void sg_simulationUpdate(const QString &path);
 	
 	//emitted when the optimizer stops running
 	void sg_simulationFinished();
 	
 	//emitted whenever a new simulation was run during the optimization
-	void sg_updateParameters(const QStringList &parameters, const QVector<double> &values);
+	void sg_updateCost(const double &value);
+
+	//emitted whenever a new simulation was run during the optimization
+	void sg_updateDesignVariables(const QStringList &design_vars, const QVector<double> &values);
+
+	//emitted whenever a new simulation was run during the optimization
+	void sg_updateMeasurements(const QStringList &measurements, const QVector<double> &values);
 
 	//emitted whenever a simulation finished
-	void sg_updateResult(const QVector<double> &x, const QVector<double> &y);
+	void sg_updateResult(const QVector<double> &independent, const QVector<double> &dependent);
 	
 
 
@@ -59,6 +65,10 @@ signals:
 public slots:
 	void sl_newQucsDir(const QString &path);
 	void sl_selectDataToEmit(const QString& independent_variable, const QString &dependent_variable);
+	//emits the sg_updateResult signals containing the requested data, if it exists
+	void sl_getResult(const QString &s_active_independent, const QString &s_active_dependent);
+
+	void sl_setEnable(const bool& enable);
 
 private slots:
 	void sl_simulationUpdate(const QString &path);
@@ -81,6 +91,7 @@ private:
 	QRegularExpression re_log;
 	QFile f_hostname_log;
 	bool b_sim_running;
+	bool b_enabled;
 	
 	QMutex mutex_qucs_dat;
 	QScopedPointer<Qucs_Dat> o_qucs_dat;
