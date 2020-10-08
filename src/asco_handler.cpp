@@ -5,6 +5,8 @@
 #include <QHostInfo>
 #include <QDebug>
 
+//TODO: detect when a simulation finished
+
 ASCO_Handler::ASCO_Handler(QObject *parent) : QObject(parent)
 {
     tmr_sim_done.reset(new QTimer);

@@ -19,6 +19,9 @@
 #include "asco_design_variable_properties.hpp"
 #include "asco_measurement_properties.hpp"
 
+
+//TODO show when a simulation is running
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
                                           ui(new Ui::MainWindow)
 {
