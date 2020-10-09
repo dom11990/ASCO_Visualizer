@@ -7,7 +7,6 @@
 #include <QStandardPaths>
 #include <QHostInfo>
 #include <QDir>
-
 #include <QThread>
 #include <QtConcurrent/QtConcurrent>
 
@@ -49,8 +48,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(p_handler.get(), &ASCO_Handler::sg_updateDesignVariables, this, &MainWindow::sl_updateDesignVariables);
     connect(p_handler.get(), &ASCO_Handler::sg_updateMeasurements, this, &MainWindow::sl_updateMeasurements);
     connect(p_handler.get(), &ASCO_Handler::sg_updateResult, this, &MainWindow::sl_updateResult);
-    
-    
+
 
     pt_handler->start();
     qDebug() << "thread running:" << pt_handler->isRunning();
@@ -160,7 +158,6 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
 
     //create the cost widget
     w_cost.reset(new ASCO_Parameter(this));
-    // connect(w_cost, &ASCO_Parameter::sg_appendDataPoint, w_cost, &ASCO_Parameter::sl_appendDataPoint);
     ui->scrollAreaWidgetContents->layout()->addWidget(w_cost.get());
     w_cost->setTitle(QString("cost function"));
 
@@ -169,7 +166,6 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
     {
         qDebug() << "Creating Design Variable: " << design_var.s_name;
         ASCO_Design_Variable *new_var = new ASCO_Design_Variable(this);
-        // connect(new_var, &ASCO_Parameter::sg_appendDataPoint, new_var, &ASCO_Parameter::sl_appendDataPoint);
         ui->scrollAreaWidgetContents->layout()->addWidget(new_var);
         new_var->setProperties(design_var);
         mw_asco_design_variable[design_var.s_name] = new_var;
@@ -179,7 +175,6 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
     {
         qDebug() << "Creating Measurement: " << measurement.s_name;
         ASCO_Measurement *new_var = new ASCO_Measurement(this);
-        // connect(new_var, &ASCO_Parameter::sg_appendDataPoint, new_var, &ASCO_Parameter::sl_appendDataPoint);
         ui->scrollAreaWidgetContents->layout()->addWidget(new_var);
         new_var->setProperties(measurement);
         mw_asco_measurement[measurement.s_name] = new_var;
@@ -223,14 +218,14 @@ void MainWindow::on_btn_ClearGraphs_clicked()
     //empty all the plots
     QVector<double> x,y;
     if(w_cost){
-        w_cost->sg_setData(x,y);
+        w_cost->sl_setData(x,y);
     }
     
     for(auto s : mw_asco_design_variable){
-        emit s->sg_setData(x,y);
+        emit s->sl_setData(x,y);
     }
     for(auto s : mw_asco_measurement){
-        emit s->sg_setData(x,y);
+        emit s->sl_setData(x,y);
     }
 
 
@@ -245,25 +240,30 @@ void MainWindow::sl_updateMeasurements(const QStringList &measurements, const QV
 {
     for (int i = 0; i < measurements.size(); i++)
     {
-        emit(mw_asco_measurement[measurements.at(i)]->sg_appendDataPoint(values.at(i)));
+        mw_asco_measurement[measurements.at(i)]->sl_appendDataPoint(values.at(i));
+        // emit(mw_asco_measurement[measurements.at(i)]->sg_appendDataPoint(values.at(i)));
     }
 }
 void MainWindow::sl_updateDesignVariables(const QStringList &design_variables, const QVector<double> &values)
 {
     for (int i = 0; i < design_variables.size(); i++)
     {
-        emit(mw_asco_design_variable[design_variables.at(i)]->sg_appendDataPoint(values.at(i)));
+        // QMetaObject::invokeMethod(mw_asco_design_variable[design_variables.at(i)],"sl_appendDataPoint",Qt::AutoConnection, Q_ARG(double,values.at(i)));
+        mw_asco_design_variable[design_variables.at(i)]->sl_appendDataPoint(values.at(i));
+
+        // emit(mw_asco_design_variable[design_variables.at(i)]->sg_appendDataPoint(values.at(i)));
     }
 }
 
 void MainWindow::sl_updateCost(const double &cost)
 {
-    emit(w_cost->sg_appendDataPoint(cost));
+    w_cost->sl_appendDataPoint(cost);
+    // emit(w_cost->sg_appendDataPoint(cost));
 }
 
 void MainWindow::sl_updateResult(const QVector<double> &independent, const QVector<double> &dependent)
 {
-    ui->w_sim_display->sg_setData(independent, dependent);
+    ui->w_sim_display->sl_setData(independent, dependent);
 }
 
 void MainWindow::sl_availableResults(const QMap<QString, QStringList> &results)

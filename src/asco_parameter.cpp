@@ -49,10 +49,6 @@ ASCO_Parameter::ASCO_Parameter(QWidget *parent)
 
 //connect signals and slots
     connect(zoomzoom, SIGNAL(zoomed(const QRectF&)),this,SLOT(sl_zoomed (const QRectF &)));
-
-    connect(this,&ASCO_Parameter::sg_setData, this, &ASCO_Parameter::sl_setData);
-    connect(this,&ASCO_Parameter::sg_appendDataPoint, this, &ASCO_Parameter::sl_appendDataPoint);
-
 }
 
 ASCO_Parameter::~ASCO_Parameter() 
