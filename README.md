@@ -1,8 +1,8 @@
-# ASCO_Visualizer
+# ASCO_Visualizer #
 
 Build dependencies:
-  -Qt5 (https://www.qt.io/)
-  -Qwt (https://qwt.sourceforge.io/)
+  * Qt5 (https://www.qt.io/)
+  * Qwt (https://qwt.sourceforge.io/)
   
 1. Go into main directory
 2. mkdir build
