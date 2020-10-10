@@ -12,7 +12,6 @@
 #include <QMutex>
 #include <QFileSystemWatcher>
 
-
 #include "qwt_plot.h"
 #include "asco_measurement.hpp"
 #include "asco_design_variable.hpp"
@@ -66,7 +65,6 @@ private slots:
 
     void sl_actionExit_triggered(bool checked);
     void sl_actionAbout_triggered(bool checked);
-    
 
     // ASCO Handler
     void sl_simulationStarted(const QVector<ASCO_Design_Variable_Properties> &vars, const QVector<ASCO_Measurement_Properties> &meas);
@@ -88,11 +86,8 @@ private:
     QMap<QString, ASCO_Design_Variable *> mw_asco_design_variable;
     QMap<QString, ASCO_Measurement *> mw_asco_measurement;
 
-    QString hostname;
     QString qucs_dir;
-    
-    
-    
+
     QString s_active_independent;
     QString s_active_dependent;
 
@@ -101,7 +96,6 @@ private:
     //thread
     QScopedPointer<QThread> pt_handler;
     QScopedPointer<ASCO_Handler> p_handler;
-    
 };
 
 #endif // MAINWINDOW_H

@@ -18,8 +18,6 @@
 #include "asco_design_variable_properties.hpp"
 #include "asco_measurement_properties.hpp"
 
-//TODO show when a simulation is running
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
                                           ui(new Ui::MainWindow)
 {
@@ -56,7 +54,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     qRegisterMetaType<QVector<ASCO_Design_Variable_Properties>>("QVector<ASCO_Design_Variable_Properties>");
     qRegisterMetaType<QVector<ASCO_Measurement_Properties>>("QVector<ASCO_Measurement_Properties>");
     qRegisterMetaType<QMap<QString, QStringList>>("QMap<QString,QStringList>");
-
 
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::sl_actionExit_triggered);
 }
@@ -167,14 +164,9 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
     ui->lbl_simRunning->setText("Simulation running...");
 }
 
-void MainWindow::sl_simulationDone() 
+void MainWindow::sl_simulationDone()
 {
     ui->lbl_simRunning->setText("No active simulation");
-}
-
-void MainWindow::sl_fileChanged(const QString &path)
-{
-    m_file_update.unlock();
 }
 
 void MainWindow::on_cb_indepVariables_currentIndexChanged(int index)
@@ -269,10 +261,7 @@ void MainWindow::sl_availableResults(const QMap<QString, QStringList> &results)
     sim_results = results;
     ui->cb_indepVariables->clear();
     ui->cb_indepVariables->addItems(sim_results.keys());
-    
+
     ui->cb_indepVariables->setCurrentIndex(sim_results.keys().indexOf(previous_independent));
     ui->cb_depVariables->setCurrentIndex(sim_results[previous_independent].indexOf(previous_dependent));
-    
-    
-    
 }
