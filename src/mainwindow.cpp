@@ -18,7 +18,6 @@
 #include "asco_design_variable_properties.hpp"
 #include "asco_measurement_properties.hpp"
 
-
 //TODO show when a simulation is running
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
@@ -49,7 +48,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(p_handler.get(), &ASCO_Handler::sg_updateMeasurements, this, &MainWindow::sl_updateMeasurements);
     connect(p_handler.get(), &ASCO_Handler::sg_updateResult, this, &MainWindow::sl_updateResult);
 
-
     pt_handler->start();
     qDebug() << "thread running:" << pt_handler->isRunning();
 
@@ -64,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     qRegisterMetaType<QVector<ASCO_Design_Variable_Properties>>("QVector<ASCO_Design_Variable_Properties>");
     qRegisterMetaType<QVector<ASCO_Measurement_Properties>>("QVector<ASCO_Measurement_Properties>");
-    qRegisterMetaType<QMap<QString,QStringList>>("QMap<QString,QStringList>");
+    qRegisterMetaType<QMap<QString, QStringList>>("QMap<QString,QStringList>");
 
     // connect(this, &MainWindow::sg_recreateDisplayers, this, &MainWindow::sl_recreateDisplayers);
     connect(ui->actionExit, &QAction::triggered, this, &MainWindow::sl_actionExit_triggered);
@@ -135,10 +133,8 @@ bool MainWindow::SetQucsDir(QString directory)
     return false;
 }
 
-
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-
 
     event->accept();
 }
@@ -157,8 +153,8 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
     } while (item);
 
     //create the cost widget
-    w_cost.reset(new ASCO_Parameter(this));
-    ui->scrollAreaWidgetContents->layout()->addWidget(w_cost.get());
+    w_cost = new ASCO_Parameter(this);
+    ui->scrollAreaWidgetContents->layout()->addWidget(w_cost);
     w_cost->setTitle(QString("cost function"));
 
     // create new asco parameter widgets and connect the slots
@@ -195,40 +191,41 @@ void MainWindow::on_cb_depVariables_currentIndexChanged(int index)
     s_active_dependent = ui->cb_depVariables->currentText();
     qDebug() << "active dependent variable " << s_active_dependent;
     emit sg_selectDataToEmit(s_active_independent, s_active_dependent);
-    emit sg_getResult(s_active_independent,s_active_dependent);
+    emit sg_getResult(s_active_independent, s_active_dependent);
 }
 
 void MainWindow::on_btn_Pause_clicked()
 {
     //TODO
-    if(ui->btn_Pause->text() == "Pause")
+    if (ui->btn_Pause->text() == "Pause")
     {
         ui->btn_Pause->setText("Resume");
         emit(sg_setEnable(false));
-    }else{
+    }
+    else
+    {
         ui->btn_Pause->setText("Pause");
         emit(sg_setEnable(true));
     }
-    
-    
 }
 
 void MainWindow::on_btn_ClearGraphs_clicked()
 {
     //empty all the plots
-    QVector<double> x,y;
-    if(w_cost){
-        w_cost->sl_setData(x,y);
-    }
-    
-    for(auto s : mw_asco_design_variable){
-        emit s->sl_setData(x,y);
-    }
-    for(auto s : mw_asco_measurement){
-        emit s->sl_setData(x,y);
+    QVector<double> x, y;
+    if (w_cost)
+    {
+        w_cost->sl_setData(x, y);
     }
 
-
+    for (auto s : mw_asco_design_variable)
+    {
+        emit s->sl_setData(x, y);
+    }
+    for (auto s : mw_asco_measurement)
+    {
+        emit s->sl_setData(x, y);
+    }
 }
 
 void MainWindow::on_le_pathDisplay_textChanged(const QString &arg1)
