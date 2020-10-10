@@ -48,8 +48,8 @@ signals:
 
     //ASCO Handler
     void sg_getResult(const QString &s_active_independent, const QString &s_active_dependent);
-    void sg_selectDataToEmit(const QString& independent_variable, const QString &dependent_variable);
-    void sg_setEnable(const bool& enable);
+    void sg_selectDataToEmit(const QString &independent_variable, const QString &dependent_variable);
+    void sg_setEnable(const bool &enable);
 
 private slots:
 
@@ -60,19 +60,17 @@ private slots:
     void on_cb_indepVariables_currentIndexChanged(int index);
     void on_cb_depVariables_currentIndexChanged(int index);
     void on_le_pathDisplay_textChanged(const QString &arg1);
-    
+
     void sl_actionExit_triggered(bool checked);
     void sl_actionAbout_triggered(bool checked);
     void sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Properties> &vars, const QVector<ASCO_Measurement_Properties> &meas);
-    
-    
+
     // ASCO Handler
     void sl_updateMeasurements(const QStringList &measurements, const QVector<double> &values);
     void sl_updateDesignVariables(const QStringList &design_variables, const QVector<double> &values);
     void sl_updateCost(const double &cost);
     void sl_updateResult(const QVector<double> &independent, const QVector<double> &dependent);
     void sl_availableResults(const QMap<QString, QStringList> &results);
-    
 
 private:
     QString FindQucsDir();
@@ -81,7 +79,7 @@ private:
 
     //UI elements
     Ui::MainWindow *ui;
-    QScopedPointer<ASCO_Parameter> w_cost;
+    ASCO_Parameter *w_cost;
     QMap<QString, ASCO_Design_Variable *> mw_asco_design_variable;
     QMap<QString, ASCO_Measurement *> mw_asco_measurement;
 
