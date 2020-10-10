@@ -23,10 +23,6 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
                                           ui(new Ui::MainWindow)
 {
-
-    //initialize variables
-    o_qucs_dat.reset(new Qucs_Dat());
-
     //initialize UI
     ui->setupUi(this);
 
@@ -40,7 +36,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(this, &MainWindow::sg_selectDataToEmit, p_handler.get(), &ASCO_Handler::sl_selectDataToEmit);
     connect(this, &MainWindow::sg_setEnable, p_handler.get(), &ASCO_Handler::sl_setEnable);
 
-    connect(p_handler.get(), &ASCO_Handler::sg_simulationStarted, this, &MainWindow::sl_recreateDisplayers);
+    connect(p_handler.get(), &ASCO_Handler::sg_simulationDone, this, &MainWindow::sl_simulationDone);
+    connect(p_handler.get(), &ASCO_Handler::sg_simulationStarted, this, &MainWindow::sl_simulationStarted);
     connect(p_handler.get(), &ASCO_Handler::sg_availableResults, this, &MainWindow::sl_availableResults);
 
     connect(p_handler.get(), &ASCO_Handler::sg_updateCost, this, &MainWindow::sl_updateCost);
@@ -55,25 +52,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     qucs_dir = FindQucsDir();
     ui->le_pathDisplay->setText(qucs_dir);
-    //TODO emit here tu update the le_pathDisplay
-
-    //update default values
-    hostname = QHostInfo::localHostName();
 
     qRegisterMetaType<QVector<ASCO_Design_Variable_Properties>>("QVector<ASCO_Design_Variable_Properties>");
     qRegisterMetaType<QVector<ASCO_Measurement_Properties>>("QVector<ASCO_Measurement_Properties>");
     qRegisterMetaType<QMap<QString, QStringList>>("QMap<QString,QStringList>");
 
-    // connect(this, &MainWindow::sg_recreateDisplayers, this, &MainWindow::sl_recreateDisplayers);
-    connect(ui->actionExit, &QAction::triggered, this, &MainWindow::sl_actionExit_triggered);
-    //connect(this, &MainWindow::sg_newIndependentVariables, this, &MainWindow::sl_newIndependentVariables);
 
-    // connect(this,&MainWindow::sg_newPlotPoints,this,&MainWindow::sl_newPlotPoints);
+    connect(ui->actionExit, &QAction::triggered, this, &MainWindow::sl_actionExit_triggered);
 }
 
 MainWindow::~MainWindow()
 {
-    mi_run = 0;
     pt_handler->quit();
     qDebug() << "Waiting for asco handler to stop...";
     pt_handler->wait();
@@ -139,7 +128,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
-void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Properties> &vars, const QVector<ASCO_Measurement_Properties> &meas)
+void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Properties> &vars, const QVector<ASCO_Measurement_Properties> &meas)
 {
     // delete all current widgets
     QLayoutItem *item;
@@ -175,7 +164,12 @@ void MainWindow::sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Proper
         new_var->setProperties(measurement);
         mw_asco_measurement[measurement.s_name] = new_var;
     }
-    mi_displays_ready = 1;
+    ui->lbl_simRunning->setText("Simulation running...");
+}
+
+void MainWindow::sl_simulationDone() 
+{
+    ui->lbl_simRunning->setText("No active simulation");
 }
 
 void MainWindow::on_cb_indepVariables_currentIndexChanged(int index)
@@ -265,8 +259,15 @@ void MainWindow::sl_updateResult(const QVector<double> &independent, const QVect
 
 void MainWindow::sl_availableResults(const QMap<QString, QStringList> &results)
 {
+    QString previous_independent = s_active_independent;
+    QString previous_dependent = s_active_dependent;
     sim_results = results;
     ui->cb_indepVariables->clear();
     ui->cb_indepVariables->addItems(sim_results.keys());
-    ui->cb_indepVariables->setCurrentText(s_active_independent);
+    
+    ui->cb_indepVariables->setCurrentIndex(sim_results.keys().indexOf(previous_independent));
+    ui->cb_depVariables->setCurrentIndex(sim_results[previous_independent].indexOf(previous_dependent));
+    
+    
+    
 }

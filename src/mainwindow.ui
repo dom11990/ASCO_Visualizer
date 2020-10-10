@@ -56,6 +56,19 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QLabel" name="lbl_simRunning">
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Plain</enum>
+            </property>
+            <property name="text">
+             <string>No Active Simulation</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item row="4" column="1">
@@ -201,11 +214,7 @@
            <height>507</height>
           </rect>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <item>
-           <widget class="Displayer" name="widget" native="true"/>
-          </item>
-         </layout>
+         <layout class="QVBoxLayout" name="verticalLayout_3"/>
         </widget>
        </widget>
       </item>
@@ -267,12 +276,6 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
-  <customwidget>
-   <class>Displayer</class>
-   <extends>QWidget</extends>
-   <header>displayer.h</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>ASCO_Parameter</class>
    <extends>QWidget</extends>

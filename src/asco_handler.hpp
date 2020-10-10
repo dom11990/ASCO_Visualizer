@@ -45,7 +45,7 @@ signals:
 	void sg_simulationUpdate(const QString &path);
 	
 	//emitted when the optimizer stops running
-	void sg_simulationFinished();
+	void sg_simulationDone();
 	
 	//emitted whenever a new simulation was run during the optimization
 	void sg_updateCost(const double &value);

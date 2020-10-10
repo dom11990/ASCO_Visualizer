@@ -63,9 +63,11 @@ private slots:
 
     void sl_actionExit_triggered(bool checked);
     void sl_actionAbout_triggered(bool checked);
-    void sl_recreateDisplayers(const QVector<ASCO_Design_Variable_Properties> &vars, const QVector<ASCO_Measurement_Properties> &meas);
+    
 
     // ASCO Handler
+    void sl_simulationStarted(const QVector<ASCO_Design_Variable_Properties> &vars, const QVector<ASCO_Measurement_Properties> &meas);
+    void sl_simulationDone();
     void sl_updateMeasurements(const QStringList &measurements, const QVector<double> &values);
     void sl_updateDesignVariables(const QStringList &design_variables, const QVector<double> &values);
     void sl_updateCost(const double &cost);
@@ -85,11 +87,9 @@ private:
 
     QString hostname;
     QString qucs_dir;
-    QFuture<bool> fut_started;
-    QAtomicInt mi_run;
-    QAtomicInt mi_displays_ready;
-    QRecursiveMutex mutex_qucs_dat;
-    QScopedPointer<Qucs_Dat> o_qucs_dat;
+    
+    
+    
     QString s_active_independent;
     QString s_active_dependent;
 
@@ -98,7 +98,7 @@ private:
     //thread
     QScopedPointer<QThread> pt_handler;
     QScopedPointer<ASCO_Handler> p_handler;
-    QFile f_asco_log;
+    
 };
 
 #endif // MAINWINDOW_H

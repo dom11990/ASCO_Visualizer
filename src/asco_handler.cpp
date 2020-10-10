@@ -290,6 +290,6 @@ void ASCO_Handler::sl_simulationUpdate(const QString &path)
 void ASCO_Handler::sl_simulationDone(const QString &path) 
 {
     b_sim_running = false;
-    emit sg_simulationFinished();
+    emit sg_simulationDone();
     qDebug() << "simulation done";
 }
