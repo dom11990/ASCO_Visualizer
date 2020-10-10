@@ -13,55 +13,36 @@
 #include "asco_measurement_properties.hpp"
 #include "asco_design_variable_properties.hpp"
 
-
 class ASCO_Parameter : public QWidget
 {
     Q_OBJECT
 public:
     explicit ASCO_Parameter(QWidget *parent = nullptr);
     virtual ~ASCO_Parameter();
-    void setTitle(const QString& title);
-
-
-protected:
-
-signals:
-    void sg_appendDataPoint(const double & data_point);
-    void sg_setData(const QVector<double> & independent, const QVector<double> & dependent);
+    void setTitle(const QString &title);
 
 public slots:
 
-    virtual void sl_appendDataPoint(const double & data_point);
-    virtual void sl_setData(const QVector<double> & independent, const QVector<double> & dependent);
-    void sl_zoomed (const QRectF &rect);
+    virtual void sl_appendDataPoint(const double &data_point);
+    virtual void sl_setData(const QVector<double> &independent, const QVector<double> &dependent);
+    void sl_zoomed(const QRectF &rect);
 
-    
-
-
-
-
-//Data
+    //Data
 public:
     QVector<double> v_data;
     QString s_name;
-    ASCO_Parameter_Properties * o_properties;
+    ASCO_Parameter_Properties *o_properties;
 
 protected:
     //UI Elements
-    QLabel* lbl_label;
-    QwtPlot* plt_plot;
+    QLabel *lbl_label;
+    QwtPlot *plt_plot;
     QVBoxLayout *lay_mainLayout;
-    QwtPlotCurve * curv_data;
+    QwtPlotCurve *curv_data;
 
     QVector<double> v_ydata;
-    QVector<double> v_xdata;   
-    QwtPlotZoomer * zoomzoom;
+    QVector<double> v_xdata;
+    QwtPlotZoomer *zoomzoom;
 };
-
-
-
-
-
-
 
 #endif // ASCO_PARAMETER_H

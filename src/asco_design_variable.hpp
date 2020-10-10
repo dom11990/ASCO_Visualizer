@@ -11,8 +11,7 @@ public:
     void setProperties(const ASCO_Design_Variable_Properties & new_props);
 
 public slots:
-    virtual void sl_appendDataPoint(const double & data_point);
-    
+    virtual void sl_setData(const QVector<double> & independent, const QVector<double> & dependent);
 
 
 protected:

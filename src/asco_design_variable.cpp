@@ -47,10 +47,11 @@ void ASCO_Design_Variable::setProperties(const ASCO_Design_Variable_Properties &
     o_properties = properties;
 }
 
-void ASCO_Design_Variable::sl_appendDataPoint(const double &data_point)
+
+
+void ASCO_Design_Variable::sl_setData(const QVector<double> & independent, const QVector<double> & dependent) 
 {
     //update the limit curve to keep up with the data
-    ASCO_Parameter::sl_appendDataPoint(data_point);
     ASCO_Design_Variable_Properties *properties = dynamic_cast<ASCO_Design_Variable_Properties *>(o_properties);
     v_max_ydata[0] = properties->d_max;
     v_max_ydata[1] = properties->d_max;
@@ -60,13 +61,16 @@ void ASCO_Design_Variable::sl_appendDataPoint(const double &data_point)
     curv_min->setBaseline(properties->d_max);
 
     //keep the second x coordinate moving with the displayed data
-    v_max_xdata[1] = v_xdata.at(v_ydata.size()-1);
-    v_min_xdata[1] = v_xdata.at(v_ydata.size()-1);
-    
-    
+    //if is needed in the event that the user cleared the graph and the v_ydata is empty
+    if(v_ydata.size()){
+        v_max_xdata[1] = v_xdata.at(v_ydata.size()-1);
+        v_min_xdata[1] = v_xdata.at(v_ydata.size()-1);
+    }else{
+        v_max_xdata[1] = v_max_xdata.at(0);
+        v_min_xdata[1] = v_min_xdata.at(0);
+    }  
     curv_max->setRawSamples(v_max_xdata.data(), v_max_ydata.data(), v_max_ydata.size());
     curv_min->setRawSamples(v_min_xdata.data(), v_min_ydata.data(), v_min_ydata.size());
-    plt_plot->replot();
-    plt_plot->axisAutoScale(QwtPlot::xBottom);
-    plt_plot->axisAutoScale(QwtPlot::yLeft);
+
+    ASCO_Parameter::sl_setData(independent,dependent);
 }

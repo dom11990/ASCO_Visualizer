@@ -49,10 +49,6 @@ ASCO_Parameter::ASCO_Parameter(QWidget *parent)
 
 //connect signals and slots
     connect(zoomzoom, SIGNAL(zoomed(const QRectF&)),this,SLOT(sl_zoomed (const QRectF &)));
-
-    connect(this,&ASCO_Parameter::sg_setData, this, &ASCO_Parameter::sl_setData);
-    connect(this,&ASCO_Parameter::sg_appendDataPoint, this, &ASCO_Parameter::sl_appendDataPoint);
-
 }
 
 ASCO_Parameter::~ASCO_Parameter() 
@@ -67,11 +63,9 @@ void ASCO_Parameter::setTitle(const QString& title)
 
     void ASCO_Parameter::sl_appendDataPoint(const double & data_point) 
 {
+    v_xdata.append(v_xdata.size());
     v_ydata.append(data_point);
-    curv_data->setRawSamples(v_xdata.data(),v_ydata.data(),v_ydata.size());
-    plt_plot->replot();
-    plt_plot->axisAutoScale(QwtPlot::xBottom);
-    plt_plot->axisAutoScale(QwtPlot::yLeft);
+    sl_setData(v_xdata,v_ydata);
 }
 
 

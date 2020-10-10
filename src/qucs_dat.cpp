@@ -138,6 +138,17 @@ bool Qucs_Dat::getData(const QString & indep_name, const QString & dep_name, QVe
     return false;   
 }
 
+bool Qucs_Dat::exists(const QString &indep_name, const QString & dep_name) 
+{
+    if(m_data.find(indep_name) != m_data.end()){
+       //see if this combincation of indep + dependent variable exists
+       return m_data[indep_name].find(dep_name) != m_data[indep_name].end();
+    }
+    //couldnt even find the independent variable
+    return false;
+
+}
+
 void Qucs_Dat::Parse_Data(QFile &file, QVector<Qucs_Numeric_Data_t>& vector)
 {
     QString line = file.readLine();
