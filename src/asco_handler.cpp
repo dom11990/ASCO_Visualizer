@@ -5,19 +5,18 @@
 #include <QHostInfo>
 #include <QDebug>
 
-//TODO: detect when a simulation finished
-
 ASCO_Handler::ASCO_Handler(QObject *parent) : QObject(parent)
 {
     tmr_sim_done.reset(new QTimer);
     watch_sim_updates.reset(new QFileSystemWatcher);
-    watch_sim_start.reset(new QFileSystemWatcher);
+    watch_sim_done.reset(new QFileSystemWatcher);
     s_hostname = QHostInfo::localHostName();
     b_sim_running = false;
     b_enabled = true;
     //connect internal signals and slots
 
     connect(watch_sim_updates.get(), &QFileSystemWatcher::fileChanged, this, &ASCO_Handler::sl_simulationUpdate);
+    connect(watch_sim_done.get(), &QFileSystemWatcher::fileChanged, this, &ASCO_Handler::sl_simulationDone);
 }
 
 ASCO_Handler::~ASCO_Handler()
@@ -258,7 +257,7 @@ void ASCO_Handler::sl_newQucsDir(const QString &path)
 {
     watch_sim_updates->removePaths(watch_sim_updates->files());
 
-    //watch_sim_start->removePaths(watch_sim_updates->files());
+    watch_sim_done->removePaths(watch_sim_done->files());
     s_qucs_dir = path;
     QDir temp(s_qucs_dir);
     s_hostname_log_path = temp.filePath(s_hostname + ".log");
@@ -266,6 +265,7 @@ void ASCO_Handler::sl_newQucsDir(const QString &path)
     s_asco_config_path = QDir(s_qucs_dir).filePath("asco_netlist.cfg");
 
     watch_sim_updates->addPath(s_hostname_log_path);
+    watch_sim_done->addPath(QDir(s_qucs_dir).filePath("log.txt"));
     qDebug() << "handler got a new qucs dir: " << s_qucs_dir;
 }
 
@@ -285,4 +285,11 @@ void ASCO_Handler::sl_simulationUpdate(const QString &path)
         }
         parseHostnameLogFile();
     }
+}
+
+void ASCO_Handler::sl_simulationDone(const QString &path) 
+{
+    b_sim_running = false;
+    emit sg_simulationFinished();
+    qDebug() << "simulation done";
 }

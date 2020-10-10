@@ -72,13 +72,14 @@ public slots:
 
 private slots:
 	void sl_simulationUpdate(const QString &path);
+	void sl_simulationDone(const QString &path);
 
 	//members
 
 private:
 	QScopedPointer<QTimer> tmr_sim_done;
 	QScopedPointer<QFileSystemWatcher> watch_sim_updates;
-	QScopedPointer<QFileSystemWatcher> watch_sim_start;
+	QScopedPointer<QFileSystemWatcher> watch_sim_done;
 	QString s_qucs_dir;
 	QString s_hostname_log_path;
 	QString s_asco_config_path;
