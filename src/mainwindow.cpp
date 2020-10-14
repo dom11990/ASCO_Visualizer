@@ -131,7 +131,18 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
     QLayoutItem *item;
     do
     {
-        item = ui->scrollAreaWidgetContents->layout()->takeAt(0);
+        qDebug() << ui->scrollArea_designVariables->layout();
+        item = ui->scrollArea_designVariables->layout()->takeAt(0);
+        if (item)
+        {
+            delete item->widget();
+        }
+    } while (item);
+
+    do
+    {
+        qDebug() << ui->scrollArea_measurements->layout();
+        item = ui->scrollArea_measurements->layout()->takeAt(0);
         if (item)
         {
             delete item->widget();
@@ -140,7 +151,7 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
 
     //create the cost widget
     w_cost = new ASCO_Parameter(this);
-    ui->scrollAreaWidgetContents->layout()->addWidget(w_cost);
+    ui->scrollArea_measurements->layout()->addWidget(w_cost);
     w_cost->setTitle(QString("cost function"));
 
     // create new asco parameter widgets and connect the slots
@@ -148,7 +159,7 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
     {
         qDebug() << "Creating Design Variable: " << design_var.s_name;
         ASCO_Design_Variable *new_var = new ASCO_Design_Variable(this);
-        ui->scrollAreaWidgetContents->layout()->addWidget(new_var);
+        ui->scrollArea_designVariables->layout()->addWidget(new_var);
         new_var->setProperties(design_var);
         mw_asco_design_variable[design_var.s_name] = new_var;
     }
@@ -157,7 +168,7 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
     {
         qDebug() << "Creating Measurement: " << measurement.s_name;
         ASCO_Measurement *new_var = new ASCO_Measurement(this);
-        ui->scrollAreaWidgetContents->layout()->addWidget(new_var);
+        ui->scrollArea_measurements->layout()->addWidget(new_var);
         new_var->setProperties(measurement);
         mw_asco_measurement[measurement.s_name] = new_var;
     }

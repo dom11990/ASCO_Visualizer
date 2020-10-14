@@ -64,7 +64,7 @@ private slots:
     void on_le_pathDisplay_textChanged(const QString &arg1);
 
     void sl_actionExit_triggered(bool checked);
-    void sl_actionAbout_triggered(bool checked);
+    void sl_actionAbout_triggered(bool checked);/*  */
 
     // ASCO Handler
     void sl_simulationStarted(const QVector<ASCO_Design_Variable_Properties> &vars, const QVector<ASCO_Measurement_Properties> &meas);
