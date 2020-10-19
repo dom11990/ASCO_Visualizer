@@ -267,13 +267,11 @@ void ASCO_Handler::sl_getResult(const QString &s_active_independent, const QStri
     QVector<double> x_data, y_data;
     if (o_qucs_dat->getData(s_independent_variable, s_dependent_variable, x_data, y_data))
     {
-        qDebug() << "o_qucs_dat y[40]" << y_data.at(40);
         emit sg_updateResult(x_data, y_data);
         //see if we have a best value stored
         if (!o_qucs_dat_best.isNull())
         {
             o_qucs_dat_best->getData(s_independent_variable, s_dependent_variable, x_data, y_data);
-            qDebug() << "o_qucs_dat_best y[40]" << y_data.at(40);
             emit sg_updateResultBest(x_data, y_data);
         }
     }
