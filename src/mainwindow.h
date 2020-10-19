@@ -73,6 +73,7 @@ private slots:
     void sl_updateDesignVariables(const QStringList &design_variables, const QVector<double> &values);
     void sl_updateCost(const double &cost);
     void sl_updateResult(const QVector<double> &independent, const QVector<double> &dependent);
+    void sl_updateResultBest(const QVector<double> &independent, const QVector<double> &dependent);
     void sl_availableResults(const QMap<QString, QStringList> &results);
 
 private:

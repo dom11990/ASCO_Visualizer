@@ -25,6 +25,7 @@ public slots:
 
     virtual void sl_appendDataPoint(const double &data_point);
     virtual void sl_setData(const QVector<double> &independent, const QVector<double> &dependent);
+    virtual void sl_setDataBest(const QVector<double> &independent, const QVector<double> &dependent);
     void sl_zoomed(const QRectF &rect);
 
     //Data
@@ -39,9 +40,12 @@ protected:
     QwtPlot *plt_plot;
     QVBoxLayout *lay_mainLayout;
     QwtPlotCurve *curv_data;
+    QwtPlotCurve *curv_data_best;
 
     QVector<double> v_ydata;
+    QVector<double> v_ydata_best;
     QVector<double> v_xdata;
+    QVector<double> v_xdata_best;
     QwtPlotZoomer *zoomzoom;
 };
 

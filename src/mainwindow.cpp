@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(p_handler.get(), &ASCO_Handler::sg_updateDesignVariables, this, &MainWindow::sl_updateDesignVariables);
     connect(p_handler.get(), &ASCO_Handler::sg_updateMeasurements, this, &MainWindow::sl_updateMeasurements);
     connect(p_handler.get(), &ASCO_Handler::sg_updateResult, this, &MainWindow::sl_updateResult);
+    connect(p_handler.get(), &ASCO_Handler::sg_updateResultBest, this, &MainWindow::sl_updateResultBest);
 
     pt_handler->start();
     qDebug() << "thread running:" << pt_handler->isRunning();
@@ -263,6 +264,11 @@ void MainWindow::sl_updateCost(const double &cost)
 void MainWindow::sl_updateResult(const QVector<double> &independent, const QVector<double> &dependent)
 {
     ui->w_sim_display->sl_setData(independent, dependent);
+}
+
+void MainWindow::sl_updateResultBest(const QVector<double> &independent, const QVector<double> &dependent) 
+{
+    ui->w_sim_display->sl_setDataBest(independent,dependent);
 }
 
 void MainWindow::sl_availableResults(const QMap<QString, QStringList> &results)

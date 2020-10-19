@@ -26,6 +26,9 @@ public:
 	bool exists(const QString &indep_name, const QString & dep_name);
 private:
 	void Parse_Data(QFile &file, QVector<Qucs_Numeric_Data_t>& vector);
+
+
+	//member vars
 	Qucs_Map_Data_t m_data;
 
 

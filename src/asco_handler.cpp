@@ -4,9 +4,11 @@
 #include <QDir>
 #include <QHostInfo>
 #include <QDebug>
+#include <QThread>
 
 ASCO_Handler::ASCO_Handler(QObject *parent) : QObject(parent)
 {
+    QThread::sleep(1);
     tmr_sim_done.reset(new QTimer);
     watch_sim_updates.reset(new QFileSystemWatcher);
     watch_sim_done.reset(new QFileSystemWatcher);
@@ -14,9 +16,9 @@ ASCO_Handler::ASCO_Handler(QObject *parent) : QObject(parent)
     b_sim_running = false;
     b_enabled = true;
     //connect internal signals and slots
-
     connect(watch_sim_updates.get(), &QFileSystemWatcher::fileChanged, this, &ASCO_Handler::sl_simulationUpdate);
     connect(watch_sim_done.get(), &QFileSystemWatcher::fileChanged, this, &ASCO_Handler::sl_simulationDone);
+
 }
 
 ASCO_Handler::~ASCO_Handler()
@@ -91,6 +93,7 @@ void ASCO_Handler::parseNetlistFile()
         qDebug() << "Measurements: " << new_meas.size();
         qDebug() << "Variables: " << new_vars.size();
         //now tell ui to create an appropriate number of graphs
+        d_best_cost = 1e30;
         emit sg_simulationStarted(new_vars, new_meas);
 
         openHostnameLogFile(true);
@@ -127,8 +130,9 @@ void ASCO_Handler::parseHostnameLogFile()
     {
         if (!f_hostname_log.isOpen())
         {
+            qWarning() << "The log file session is no longer valid. Reloading...";
             openHostnameLogFile(true);
-            qWarning() << "The log file session is no longer valid. It has been reloaded: " << f_hostname_log.isOpen();
+            qWarning() << "Reload success: " << f_hostname_log.isOpen();
         }
     }
     QString newline(buffer);
@@ -174,12 +178,19 @@ void ASCO_Handler::parseHostnameLogFile()
             emit sg_updateDesignVariables(s_design_variables, values);
 
             // parse the sim data file and emit the selected data
-            parseDatFile();
+            bool new_best = cost_value < d_best_cost;
+            if (new_best)
+            {
+                qDebug() << "best was: " << d_best_cost << "now is: " << cost_value;
+                d_best_cost = cost_value;
+            }
+
+            parseDatFile(new_best, false);
         }
     }
 }
 
-void ASCO_Handler::parseDatFile(bool emit_variables)
+void ASCO_Handler::parseDatFile(bool is_best, bool emit_variables)
 {
 
     QScopedPointer<Qucs_Dat> new_file_to_parse(new Qucs_Dat);
@@ -202,20 +213,30 @@ void ASCO_Handler::parseDatFile(bool emit_variables)
         QVector<double> x_data, y_data;
         new_file_to_parse->getData(s_independent_variable, s_dependent_variable, x_data, y_data);
         emit sg_updateResult(x_data, y_data);
+
+        if(is_best){
+            emit sg_updateResultBest(x_data,y_data);
+        }
     }
     else
     {
         qDebug() << "no valid data selected to emit";
     }
 
-    // todo: might not need the mutex anymore after the restructure..
-    mutex_qucs_dat.lock();
+    if (is_best)
+    {
+        //update the best data so future queries will work
+        o_qucs_dat_best.reset(new Qucs_Dat(*o_qucs_dat));
+    }
     o_qucs_dat.swap(new_file_to_parse);
-    mutex_qucs_dat.unlock();
 }
 
 void ASCO_Handler::openHostnameLogFile(bool seek_to_end)
 {
+    //remove the old watcher file path
+    watch_sim_updates->removePaths(watch_sim_updates->files());
+    //close the old file
+    f_hostname_log.close();
     //open the log file for parsing later, move the position to the end of the file
     f_hostname_log.setFileName(s_hostname_log_path);
     if (!f_hostname_log.open(QIODevice::ReadOnly))
@@ -228,6 +249,8 @@ void ASCO_Handler::openHostnameLogFile(bool seek_to_end)
         //seek to the end of the file
         f_hostname_log.seek(f_hostname_log.size());
     }
+    //opening the file was successful, add a watch
+    watch_sim_updates->addPath(s_hostname_log_path);
 }
 
 void ASCO_Handler::sl_selectDataToEmit(const QString &independent_variable, const QString &dependent_variable)
@@ -244,7 +267,15 @@ void ASCO_Handler::sl_getResult(const QString &s_active_independent, const QStri
     QVector<double> x_data, y_data;
     if (o_qucs_dat->getData(s_independent_variable, s_dependent_variable, x_data, y_data))
     {
+        qDebug() << "o_qucs_dat y[40]" << y_data.at(40);
         emit sg_updateResult(x_data, y_data);
+        //see if we have a best value stored
+        if (!o_qucs_dat_best.isNull())
+        {
+            o_qucs_dat_best->getData(s_independent_variable, s_dependent_variable, x_data, y_data);
+            qDebug() << "o_qucs_dat_best y[40]" << y_data.at(40);
+            emit sg_updateResultBest(x_data, y_data);
+        }
     }
 }
 
@@ -255,18 +286,21 @@ void ASCO_Handler::sl_setEnable(const bool &enable)
 
 void ASCO_Handler::sl_newQucsDir(const QString &path)
 {
-    watch_sim_updates->removePaths(watch_sim_updates->files());
-
-    watch_sim_done->removePaths(watch_sim_done->files());
     s_qucs_dir = path;
     QDir temp(s_qucs_dir);
     s_hostname_log_path = temp.filePath(s_hostname + ".log");
     s_dat_path = temp.filePath(s_hostname + ".dat");
     s_asco_config_path = QDir(s_qucs_dir).filePath("asco_netlist.cfg");
 
-    watch_sim_updates->addPath(s_hostname_log_path);
-    watch_sim_done->addPath(QDir(s_qucs_dir).filePath("log.txt"));
     qDebug() << "handler got a new qucs dir: " << s_qucs_dir;
+    //watch the directory for simulation starts
+
+    watch_sim_done->removePaths(watch_sim_done->files());
+    watch_sim_done->addPath(QDir(s_qucs_dir).filePath("log.txt"));
+
+    //also watch the log file (if it exists)
+    watch_sim_updates->removePaths(watch_sim_updates->files());
+    watch_sim_updates->addPath(s_hostname_log_path);
 }
 
 void ASCO_Handler::sl_simulationUpdate(const QString &path)
@@ -281,13 +315,13 @@ void ASCO_Handler::sl_simulationUpdate(const QString &path)
             b_sim_running = true;
             //emits sg_simulationStarted with all the parameters and measurements
             parseNetlistFile();
-            parseDatFile(true);
+            parseDatFile(false, true);
         }
         parseHostnameLogFile();
     }
 }
 
-void ASCO_Handler::sl_simulationDone(const QString &path) 
+void ASCO_Handler::sl_simulationDone(const QString &path)
 {
     b_sim_running = false;
     emit sg_simulationDone();

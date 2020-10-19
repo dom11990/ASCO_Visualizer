@@ -28,11 +28,12 @@ public:
 	ASCO_Handler(QObject *parent = 0);
 	virtual ~ASCO_Handler();
 
-private:
+protected:
 	void parseNetlistFile();
 	void parseHostnameLogFile();
-	void parseDatFile(bool emit_variables = false);
+	void parseDatFile(bool is_best, bool emit_variables);
 	void openHostnameLogFile(bool seek_to_end = false);
+	void resetWatchers();
 
 
 signals:
@@ -56,8 +57,14 @@ signals:
 	//emitted whenever a new simulation was run during the optimization
 	void sg_updateMeasurements(const QStringList &measurements, const QVector<double> &values);
 
-	//emitted whenever a simulation finished
+	/**
+	 * emitted whenever a simulation finished, is_best is true if this data represents the lowest observed cost
+	 */
+
 	void sg_updateResult(const QVector<double> &independent, const QVector<double> &dependent);
+
+
+	void sg_updateResultBest(const QVector<double> &independent, const QVector<double> &dependent);
 	
 
 
@@ -80,6 +87,9 @@ private:
 	QScopedPointer<QTimer> tmr_sim_done;
 	QScopedPointer<QFileSystemWatcher> watch_sim_updates;
 	QScopedPointer<QFileSystemWatcher> watch_sim_done;
+	QScopedPointer<Qucs_Dat> o_qucs_dat;
+	QScopedPointer<Qucs_Dat> o_qucs_dat_best;
+
 	QString s_qucs_dir;
 	QString s_hostname_log_path;
 	QString s_asco_config_path;
@@ -93,7 +103,5 @@ private:
 	QFile f_hostname_log;
 	bool b_sim_running;
 	bool b_enabled;
-	
-	QMutex mutex_qucs_dat;
-	QScopedPointer<Qucs_Dat> o_qucs_dat;
+	double d_best_cost;
 };

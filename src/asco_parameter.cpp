@@ -40,6 +40,13 @@ ASCO_Parameter::ASCO_Parameter(QWidget *parent)
     curv_data->setRawSamples(v_xdata.data(),v_ydata.data(),v_ydata.size());
     curv_data->attach(plt_plot);
 
+    curv_data_best = new QwtPlotCurve();
+    curv_data_best->setTitle( "Best" );
+    curv_data_best->setPen( QPen( Qt::red, 2 ) ),
+    curv_data_best->setRenderHint( QwtPlotItem::RenderAntialiased, true );
+    curv_data_best->setRawSamples(v_xdata_best.data(),v_ydata_best.data(),v_ydata_best.size());
+    curv_data_best->attach(plt_plot);
+
 
     //make the widget retain the space even when it is hidden
     QSizePolicy sp_retain = sizePolicy();
@@ -78,6 +85,16 @@ void ASCO_Parameter::sl_setData(const QVector<double> & independent, const QVect
     plt_plot->replot();
     plt_plot->axisAutoScale(QwtPlot::xBottom);
     plt_plot->axisAutoScale(QwtPlot::yLeft);
+}
+
+void ASCO_Parameter::sl_setDataBest(const QVector<double> &independent, const QVector<double> &dependent) 
+{
+    v_xdata_best = independent;
+    v_ydata_best = dependent;
+    curv_data_best->setRawSamples(v_xdata_best.data(),v_ydata_best.data(),v_ydata_best.size());
+    plt_plot->replot();
+    plt_plot->axisAutoScale(QwtPlot::xBottom);
+    plt_plot->axisAutoScale(QwtPlot::yLeft); 
 }
 
 void ASCO_Parameter::sl_zoomed(const QRectF &rect) 
