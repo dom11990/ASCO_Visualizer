@@ -36,10 +36,8 @@ bool Qucs_Dat::Parse_File(const QString& path)
     if(dir_temp.exists()){
         //then use the ramdisk folder
         f_file.setFileName(dir_temp.filePath(source.fileName()));
-    }else{
     }
     
-    qDebug() << "filename: " << f_file.fileName();
     QFile::copy(path, f_file.fileName());
     
     
