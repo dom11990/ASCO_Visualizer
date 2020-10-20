@@ -37,13 +37,13 @@ void ASCO_Measurement::setProperties(const ASCO_Measurement_Properties &new_prop
     {
         //need to fill to pos infinity
         curv_limit->setBaseline(1e8);
-        qDebug() << properties->s_name << " detected GE : " << properties->s_compare << properties->d_limit;
+        qInfo() << properties->s_name << " detected GE : " << properties->s_compare << properties->d_limit;
     }
     else if (!QString::compare(properties->s_compare, "LE"))
     {
         //need to fill to neg infinity, TODO: -1e8 seems to be the max, why??
         curv_limit->setBaseline(-1e8);
-        qDebug() << properties->s_name << " detected LE : " << properties->s_compare << properties->d_limit;
+        qInfo() << properties->s_name << " detected LE : " << properties->s_compare << properties->d_limit;
     }
 
     o_properties = properties;

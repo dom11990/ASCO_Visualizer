@@ -45,6 +45,8 @@ signals:
     void sg_newQucsDir(const QString &s_dir);
     void sg_newFileLine(const QString &s_dir);
     void sg_recreateDisplayers(const QVector<ASCO_Design_Variable_Properties> &params, const QVector<ASCO_Measurement_Properties> &measurements);
+    
+    //Parameter
     void sg_appendDataPoint(const double &data_point);
     void sg_selectIndependent(const QString &indep);
 
@@ -53,10 +55,13 @@ signals:
     void sg_selectDataToEmit(const QString &independent_variable, const QString &dependent_variable);
     void sg_setEnable(const bool &enable);
 
+    
+
 private slots:
 
     // UI
     void on_btn_Pause_clicked();
+    void on_btn_LineColor_clicked();
     void on_btn_ClearGraphs_clicked();
     void on_changeQucsDirButton_clicked();
     void on_cb_indepVariables_currentIndexChanged(int index);
@@ -75,6 +80,9 @@ private slots:
     void sl_updateResult(const QVector<double> &independent, const QVector<double> &dependent);
     void sl_updateResultBest(const QVector<double> &independent, const QVector<double> &dependent);
     void sl_availableResults(const QMap<QString, QStringList> &results);
+
+
+    
 
 private:
     QString FindQucsDir();

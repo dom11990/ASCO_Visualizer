@@ -5,6 +5,7 @@
 #include <QVector>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QColor>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_zoomer.h>
@@ -27,6 +28,7 @@ public slots:
     virtual void sl_setData(const QVector<double> &independent, const QVector<double> &dependent);
     virtual void sl_setDataBest(const QVector<double> &independent, const QVector<double> &dependent);
     void sl_zoomed(const QRectF &rect);
+    void sl_setLineColor(const QColor& color);
 
     //Data
 public:

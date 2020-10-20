@@ -12,6 +12,8 @@
 
 #include <QFile>
 #include <QRegularExpression>
+ #include <QColorDialog> 
+
 
 #include "qwt_plot_curve.h"
 #include "qwt_plot.h"
@@ -26,9 +28,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     pt_handler.reset(new QThread);
     p_handler.reset(new ASCO_Handler);
-    qDebug() << "before" << p_handler.get();
     p_handler->moveToThread(pt_handler.get());
-    qDebug() << "after" << p_handler.get();
     connect(this, &MainWindow::sg_newQucsDir, p_handler.get(), &ASCO_Handler::sl_newQucsDir);
     connect(this, &MainWindow::sg_getResult, p_handler.get(), &ASCO_Handler::sl_getResult);
     connect(this, &MainWindow::sg_selectDataToEmit, p_handler.get(), &ASCO_Handler::sl_selectDataToEmit);
@@ -45,7 +45,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     connect(p_handler.get(), &ASCO_Handler::sg_updateResultBest, this, &MainWindow::sl_updateResultBest);
 
     pt_handler->start();
-    qDebug() << "thread running:" << pt_handler->isRunning();
 
     // ui->w_sim_display->hide();
 
@@ -62,14 +61,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 MainWindow::~MainWindow()
 {
     pt_handler->quit();
-    qDebug() << "Waiting for asco handler to stop...";
+    qInfo() << "Waiting for asco handler to stop...";
     pt_handler->wait();
     // delete ui;
 }
 
 void MainWindow::sl_actionExit_triggered(bool checked)
 {
-    qDebug("Quitting");
+    qInfo("Quitting");
     exit(0);
 }
 
@@ -87,13 +86,12 @@ void MainWindow::on_changeQucsDirButton_clicked()
     QString new_path;
     if (dialog.exec())
     {
-        qDebug() << "yay";
         new_path = dialog.selectedFiles().first();
         ui->le_pathDisplay->setText(new_path);
     }
 
-    qDebug() << "Selected path: " << new_path;
-    qDebug() << "Attempting to set new path" << new_path;
+    qInfo() << "Selected path: " << new_path;
+    qInfo() << "Attempting to set new path" << new_path;
 }
 
 QString MainWindow::FindQucsDir()
@@ -114,7 +112,7 @@ bool MainWindow::SetQucsDir(QString directory)
     {
         qucs_dir = new_path.absolutePath();
         emit sg_newQucsDir(qucs_dir);
-        qDebug() << qucs_dir << " appears to be a valid qucs dir";
+        qInfo() << qucs_dir << " appears to be a valid qucs dir";
         return true;
     }
     return false;
@@ -132,7 +130,6 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
     QLayoutItem *item;
     do
     {
-        qDebug() << ui->scrollArea_designVariables->layout();
         item = ui->scrollArea_designVariables->layout()->takeAt(0);
         if (item)
         {
@@ -142,7 +139,6 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
 
     do
     {
-        qDebug() << ui->scrollArea_measurements->layout();
         item = ui->scrollArea_measurements->layout()->takeAt(0);
         if (item)
         {
@@ -158,7 +154,7 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
     // create new asco parameter widgets and connect the slots
     for (ASCO_Design_Variable_Properties design_var : vars)
     {
-        qDebug() << "Creating Design Variable: " << design_var.s_name;
+        qInfo() << "Creating Design Variable: " << design_var.s_name;
         ASCO_Design_Variable *new_var = new ASCO_Design_Variable(this);
         ui->scrollArea_designVariables->layout()->addWidget(new_var);
         new_var->setProperties(design_var);
@@ -167,7 +163,7 @@ void MainWindow::sl_simulationStarted(const QVector<ASCO_Design_Variable_Propert
 
     for (ASCO_Measurement_Properties measurement : meas)
     {
-        qDebug() << "Creating Measurement: " << measurement.s_name;
+        qInfo() << "Creating Measurement: " << measurement.s_name;
         ASCO_Measurement *new_var = new ASCO_Measurement(this);
         ui->scrollArea_measurements->layout()->addWidget(new_var);
         new_var->setProperties(measurement);
@@ -184,7 +180,7 @@ void MainWindow::sl_simulationDone()
 void MainWindow::on_cb_indepVariables_currentIndexChanged(int index)
 {
     s_active_independent = ui->cb_indepVariables->currentText();
-    qDebug() << "active independent variable " << s_active_independent;
+    qInfo() << "active independent variable " << s_active_independent;
     ui->cb_depVariables->clear();
     ui->cb_depVariables->addItems(sim_results[s_active_independent]);
 }
@@ -192,7 +188,7 @@ void MainWindow::on_cb_indepVariables_currentIndexChanged(int index)
 void MainWindow::on_cb_depVariables_currentIndexChanged(int index)
 {
     s_active_dependent = ui->cb_depVariables->currentText();
-    qDebug() << "active dependent variable " << s_active_dependent;
+    qInfo() << "active dependent variable " << s_active_dependent;
     emit sg_selectDataToEmit(s_active_independent, s_active_dependent);
     emit sg_getResult(s_active_independent, s_active_dependent);
 }
@@ -209,6 +205,24 @@ void MainWindow::on_btn_Pause_clicked()
     {
         ui->btn_Pause->setText("Pause");
         emit(sg_setEnable(true));
+    }
+}
+
+void MainWindow::on_btn_LineColor_clicked() 
+{
+    QColorDialog color_dog(Qt::black);
+    
+    QColor selected_color = color_dog.getColor();
+        
+    w_cost->sl_setLineColor(selected_color);
+    ui->w_sim_display->sl_setLineColor(selected_color);
+
+    for(auto s : mw_asco_design_variable.values()){
+        s->sl_setLineColor(selected_color);
+    }
+
+    for(auto s : mw_asco_measurement.values()){
+        s->sl_setLineColor(selected_color);
     }
 }
 

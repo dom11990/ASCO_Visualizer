@@ -35,14 +35,14 @@ ASCO_Parameter::ASCO_Parameter(QWidget *parent)
     //create the data curve and assign the raw buffers
     curv_data = new QwtPlotCurve();
     curv_data->setTitle( "Data" );
-    curv_data->setPen( QPen( Qt::black, 2 ) ),
+    curv_data->setPen(QPen(Qt::black, 2 ));
     curv_data->setRenderHint( QwtPlotItem::RenderAntialiased, true );
     curv_data->setRawSamples(v_xdata.data(),v_ydata.data(),v_ydata.size());
     curv_data->attach(plt_plot);
 
     curv_data_best = new QwtPlotCurve();
     curv_data_best->setTitle( "Best" );
-    curv_data_best->setPen( QPen( Qt::red, 2 ) ),
+    curv_data_best->setPen(QPen(Qt::red, 2));
     curv_data_best->setRenderHint( QwtPlotItem::RenderAntialiased, true );
     curv_data_best->setRawSamples(v_xdata_best.data(),v_ydata_best.data(),v_ydata_best.size());
     curv_data_best->attach(plt_plot);
@@ -104,6 +104,11 @@ void ASCO_Parameter::sl_zoomed(const QRectF &rect)
             plt_plot->setAxisAutoScale(QwtPlot::yLeft,true);
             zoomzoom->setZoomBase(true);
     }
+}
+
+void ASCO_Parameter::sl_setLineColor(const QColor& color) 
+{
+    curv_data->setPen(QPen(color, 2));
 }
 
 

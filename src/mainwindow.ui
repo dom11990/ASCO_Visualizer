@@ -149,6 +149,13 @@
            <number>0</number>
           </property>
           <item>
+           <widget class="QPushButton" name="btn_LineColor">
+            <property name="text">
+             <string>Set Line Color</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="btn_ClearGraphs">
             <property name="text">
              <string>Clear Graphs</string>
@@ -238,8 +245,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>429</width>
-               <height>354</height>
+               <width>345</width>
+               <height>260</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -269,7 +276,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>376</width>
+               <width>345</width>
                <height>260</height>
               </rect>
              </property>

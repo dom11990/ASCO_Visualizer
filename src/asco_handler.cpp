@@ -41,7 +41,7 @@ void ASCO_Handler::parseNetlistFile()
         QRegularExpressionMatchIterator it_match = regex.globalMatch(cfg_file_contents);
 
         QVector<ASCO_Design_Variable_Properties> new_vars;
-        qDebug() << "Extracting parameters and goals...";
+        qInfo() << "Extracting parameters and goals...";
         s_measurements.clear();
         s_design_variables.clear();
 
@@ -90,8 +90,8 @@ void ASCO_Handler::parseNetlistFile()
             //read then next line since these are parsed line by line
             measurement = stream.readLine();
         }
-        qDebug() << "Measurements: " << new_meas.size();
-        qDebug() << "Variables: " << new_vars.size();
+        qInfo() << "Measurements: " << new_meas.size();
+        qInfo() << "Variables: " << new_vars.size();
         //now tell ui to create an appropriate number of graphs
         d_best_cost = 1e30;
         emit sg_simulationStarted(new_vars, new_meas);
@@ -100,7 +100,7 @@ void ASCO_Handler::parseNetlistFile()
     }
     else
     {
-        qDebug() << "Failed to open netlist file to parse simulation parameters: " << asco_cfg.fileName();
+        qWarning() << "Failed to open netlist file to parse simulation parameters: " << asco_cfg.fileName();
     }
 }
 
@@ -137,7 +137,6 @@ void ASCO_Handler::parseHostnameLogFile()
     }
     QString newline(buffer);
 
-    // qDebug() << "pos: " << f_hostname_log.pos();
     if (!newline.isEmpty())
     {
         int match_index = 0;
@@ -181,7 +180,7 @@ void ASCO_Handler::parseHostnameLogFile()
             bool new_best = cost_value < d_best_cost;
             if (new_best)
             {
-                qDebug() << "best was: " << d_best_cost << "now is: " << cost_value;
+                qInfo() << "best was: " << d_best_cost << "now is: " << cost_value;
                 d_best_cost = cost_value;
             }
 
@@ -203,7 +202,6 @@ void ASCO_Handler::parseDatFile(bool is_best, bool emit_variables)
     }
     if (emit_variables)
     {
-        qDebug() << vars;
         emit sg_availableResults(vars);
     }
 
@@ -290,9 +288,7 @@ void ASCO_Handler::sl_newQucsDir(const QString &path)
     s_dat_path = temp.filePath(s_hostname + ".dat");
     s_asco_config_path = QDir(s_qucs_dir).filePath("asco_netlist.cfg");
 
-    qDebug() << "handler got a new qucs dir: " << s_qucs_dir;
     //watch the directory for simulation starts
-
     watch_sim_done->removePaths(watch_sim_done->files());
     watch_sim_done->addPath(QDir(s_qucs_dir).filePath("log.txt"));
 
@@ -323,5 +319,5 @@ void ASCO_Handler::sl_simulationDone(const QString &path)
 {
     b_sim_running = false;
     emit sg_simulationDone();
-    qDebug() << "simulation done";
+    qInfo() << "simulation done";
 }
