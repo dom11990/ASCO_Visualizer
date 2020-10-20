@@ -2,10 +2,12 @@
 #include <QRegularExpression>
 #include <QStringList>
 #include <QDebug>
+#include <QFileInfo>
 
 
 Qucs_Dat::Qucs_Dat()
 {
+    dir_temp.setPath("/mnt/ramdisk");
 }
 
 Qucs_Dat::~Qucs_Dat()
@@ -26,9 +28,21 @@ bool Qucs_Dat::Parse_File(const QString& path)
     }
     
     bool retval;
+    QFileInfo source(path);
     QFile f_file;
-    QFile::copy(path, path + "-tmp");
-    f_file.setFileName(path + "-tmp");
+    QDir folder(source.dir());
+
+    f_file.setFileName(folder.absoluteFilePath(source.fileName() + "-tmp"));
+    if(dir_temp.exists()){
+        //then use the ramdisk folder
+        f_file.setFileName(dir_temp.filePath(source.fileName()));
+    }else{
+    }
+    
+    qDebug() << "filename: " << f_file.fileName();
+    QFile::copy(path, f_file.fileName());
+    
+    
     if (f_file.open(QIODevice::ReadOnly))
     {
         //parse the file line by line
@@ -92,7 +106,7 @@ bool Qucs_Dat::Parse_File(const QString& path)
         f_file.close();
     }else{
         //unable to open the file
-        QString error_msg("Unable to open data file at" + path + " for parsing." );
+        QString error_msg("Unable to open data file at" + f_file.fileName() + " for parsing." );
         qFatal(error_msg.toStdString().c_str());
         return false;
     }

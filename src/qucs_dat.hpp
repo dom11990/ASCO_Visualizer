@@ -4,7 +4,7 @@
 #include <QMap>
 #include <QVector>
 #include <complex>
-
+#include <QDir>
 
 typedef double Qucs_Numeric_Data_t;
 typedef QMap<QString, QMap<QString, QVector<Qucs_Numeric_Data_t>>> Qucs_Map_Data_t;
@@ -30,6 +30,8 @@ private:
 
 	//member vars
 	Qucs_Map_Data_t m_data;
+	//directory to use for storing the best simulation and those that are still being parsed
+	QDir dir_temp;
 
 
 };
